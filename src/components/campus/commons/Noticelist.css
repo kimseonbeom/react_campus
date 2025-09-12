@@ -1,0 +1,155 @@
+/* ===== 모바일 공지 목록 – 1번 스샷 스타일 (변수/고급문법 X) ===== */
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: #f9fbfc;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", Arial, sans-serif;
+  color: #111111;
+}
+
+/* 레이아웃 */
+.notice-wrap {
+  max-width: 366px;           /* 스샷 폭에 맞춤 */
+  margin: 0 auto;
+  min-height: 100%;
+  padding: 14px 12px 80px;
+}
+
+.notice-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 8px 4px 12px;
+}
+
+/* 검색/필터 영역 */
+.notice-search {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0 4px 12px;
+}
+
+.select-wrap { position: relative; }
+
+.notice-select {
+  appearance: none;
+  height: 36px;
+  padding: 0 28px 0 10px;
+  border: 1px solid #e7edf2;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 13px;
+  color: #333333;
+}
+.select-wrap::after {
+  content: "▾";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: #848e96;
+  pointer-events: none;
+}
+
+.search-wrap { position: relative; flex: 1; }
+
+.search-wrap input {
+  width: 100%;
+  height: 36px;
+  border: 1px solid #e4eaef;   /* 기본은 연한 회색 */
+  border-radius: 8px;
+  padding: 0 10px 0 34px;       /* 돋보기 아이콘 자리 */
+  background: #ffffff;
+  font-size: 13px;
+}
+.search-wrap input:focus {
+  outline: none;
+  border-color: #23c08d;        /* 스샷 같은 민트색 테두리 */
+  box-shadow: 0 0 0 2px rgba(35, 192, 141, 0.15);
+}
+.search-wrap .icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #7c8790;
+}
+
+/* 공지 리스트 */
+.notice-list {
+  display: grid;
+  gap: 10px;
+}
+
+/* 아이템 – 좌측 정렬, 얇은 테두리, 약한 그림자 */
+.notice-item {
+  position: relative;
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: #ffffff;
+  border: 1px solid #eef1f4;
+  border-radius: 10px;
+  padding: 10px 36px 12px 12px; /* 우측 꺾쇠 공간 */
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  cursor: pointer;
+}
+
+.notice-item::after {
+  content: ">";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: #a7afb7;
+}
+
+.notice-date {
+  font-size: 11px;
+  color: #9aa3ab;
+  margin-bottom: 6px;
+}
+
+.notice-name {
+  font-size: 14px;
+  color: #1b1f23;
+  line-height: 1.35;
+  font-weight: 600;
+  word-break: keep-all;
+}
+
+/* 페이지네이션 – 얇은 테두리의 사각 버튼 + 초록 활성 페이지 */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.page-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e7edf2;
+  background: #ffffff;
+  color: #556068;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.page-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-btn.is-active {
+  background: #23c08d;
+  border-color: #23c08d;
+  color: #ffffff;
+  font-weight: 700;
+}
