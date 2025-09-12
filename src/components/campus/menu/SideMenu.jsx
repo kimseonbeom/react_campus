@@ -4,7 +4,7 @@ import { user1, home, homehv, lecture, lecturehv, project, projecthv,
         post, posthv, mypage
 } from '../img'
 import { useAuthStore, useMypageModalStore, useSideMenuStore } from '../commons/modalStore'
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import Toast from '../commons/Toast'
 import { getStudent, getUserSession, logoutUser } from '../api'
 import axios from 'axios'
@@ -148,6 +148,15 @@ function SideMenu() {
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const memId = query.get('memId');
+  const navigate = useNavigate();
+
+  const handleLectureChange = (e) => {
+  const lecId = e.target.value;
+  if (lecId) {
+    navigate(`/lecture?memId=${memId}&lec_id=${lecId}`);
+  }
+};
+
 
 useEffect(() => {
     if (memId) {
@@ -241,13 +250,26 @@ async function getStudentData(memId) {
         <div className="col-sm-2"></div>
         <div className="col-sm-9">
           <div className="form-group">
-            <Select className="custom-select my-border" style={{ marginLeft: '70px', width: '70%' }}>
-  <option value="" >전공을 선택하세요.</option>
-  {!loading && studentData?.stulectureList?.map((lec) => (
-    <option key={lec.lecId} value={lec.lecId}> 
-      {lec.lec_name}
-    </option>
-  ))}
+            <Select
+  className="custom-select my-border"
+  style={{ marginLeft: '70px', width: '70%' }}
+  onChange={handleLectureChange}
+>
+  <option value="">전공을 선택하세요.</option>
+  {!loading &&
+    (user.mem_auth === 'ROLE01' // 학생이면
+      ? studentData?.stulectureList?.map((lec) => (
+          <option key={lec.lec_id} value={lec.lec_id}>
+            {lec.lec_name}
+          </option>
+        ))
+      : studentData?.prolectureList?.map((lec) => ( // 교수면
+          <option key={lec.lec_id} value={lec.lec_id}>
+            {lec.lec_name}
+          </option>
+        ))
+    )
+  }
 </Select>
           </div>
         </div>
@@ -300,8 +322,12 @@ async function getStudentData(memId) {
   </div>
 
   <Submenu open={activeMenu === "project"}>
+    <StyledLink to='/project/team' onClick={closeMenu}>
       <li className="nav-item"><p style={{ marginLeft: '80px', marginTop: '15px'}}>팀 목록</p></li>
+      </StyledLink>
+       <StyledLink to='/project/object' onClick={closeMenu}>
       <li className="nav-item"><p style={{ marginLeft: '80px', marginTop: '15px'}}>결과물</p></li>
+      </StyledLink>
     </Submenu>
 </li>
 

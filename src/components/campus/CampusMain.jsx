@@ -94,7 +94,7 @@ function CampusMain() {
   const login = useAuthStore(state => state.login);
   const logout = useAuthStore(state => state.logout);
   const [checkingSession, setCheckingSession] = useState(true);
-
+  const user = useAuthStore(state => state.user);
   useEffect(() => {
     // 세션 스토리지에 로그인 정보가 있으면 로그인 처리
     const userData = sessionStorage.getItem('user');
@@ -122,9 +122,9 @@ function CampusMain() {
       <SideMenu/>
 
       <Routes>
-        <Route path='/' element={<HomeWrapper />}></Route>
+        <Route path='/' element={user.mem_auth === "ROLE01" ? <HomeWrapper /> : <HomeWrapperPro />}></Route>
         <Route path='/JAVA101/plan' element={<LecturePlanWrapper />}>
-          <Route index element={<LecturePlanNoneDataPro />}></Route>
+          <Route index element={user.mem_auth === "ROLE01" ? <LecturePlanNoneData /> : <LecturePlanNoneDataPro />}></Route>
         </Route>
         <Route path='/JAVA101/notice' element={<LectureNoticeWrapper />}>
           <Route index element={<LectureNoticeList />}></Route>
@@ -135,7 +135,7 @@ function CampusMain() {
           <Route path=':lecvid_id' element={<LectureOnlineDetail />}></Route>
         </Route>
         <Route path='/JAVA101/atten' element={<LectureAttendanceWrapper />}>
-          <Route index element={<LectureAttendanceListStu />}></Route>
+          <Route index element={user.mem_auth === "ROLE01" ? <LectureAttendanceListStu /> : <LectureAttendanceListPro />}></Route>
         </Route>
         <Route path='/JAVA101/homework' element={<LectureHomeworkWrapper />}>
           <Route index element={<LectureHomeworkList />}></Route>
@@ -146,7 +146,8 @@ function CampusMain() {
           <Route path=':cf_no' element={<LecturePdsDetail />}></Route>
         </Route>
         <Route path='/project/team' element={<ProjectTeamWrapper />}>
-          <Route index element={<ProjectTeamList />}></Route>
+          <Route  index element={user.mem_auth === "ROLE01" ? <ProjectTeamList /> : <ProjectTeamListPro />} 
+  />
           <Route path=':team_id' element={<ProjectTeamDetail />}></Route>
         </Route>
         <Route path='/project/object' element={<ProjectObjectWrapper />}>
@@ -161,7 +162,7 @@ function CampusMain() {
         </Route>
       </Routes>
 
-      <Mypage/>
+      {user?.mem_auth?.includes("ROLE01") ? <Mypage /> : <MypagePro />}
       <MailDashBoard/>
       <LecturePlanModify/>
       <LecturePlanRegist/>
