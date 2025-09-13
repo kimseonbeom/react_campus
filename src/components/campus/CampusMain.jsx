@@ -162,11 +162,13 @@ function CampusMain() {
         </Route>
       </Routes>
 
-      {user?.mem_auth?.includes("ROLE01") ? <Mypage /> : <MypagePro />}
+      { user.mem_auth.includes("ROLE01") ? <Mypage /> : <MypagePro />}
       <MailDashBoard/>
       <LecturePlanModify/>
       <LecturePlanRegist/>
       <LecturePlanRegist/>
+      <ChangePasswordModal/>
+      <ProjectTeamModify/>
       </>
       )}
       

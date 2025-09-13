@@ -322,7 +322,7 @@ async function getStudentData(memId) {
   </div>
 
   <Submenu open={activeMenu === "project"}>
-    <StyledLink to='/project/team' onClick={closeMenu}>
+    <StyledLink to={`/project/team?memId=${user.mem_id}`} onClick={closeMenu}>
       <li className="nav-item"><p style={{ marginLeft: '80px', marginTop: '15px'}}>팀 목록</p></li>
       </StyledLink>
        <StyledLink to='/project/object' onClick={closeMenu}>

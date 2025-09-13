@@ -94,5 +94,9 @@ export const useAuthStore = create(
     }
   )
 )
-
+export const useProjectTeamModifyModalStore = create((set) => ({
+  visible: false,
+  showModal: () => set({ visible: true }),
+  hideModal: () => set({ visible: false }),
+}));
 export default useModalStore;

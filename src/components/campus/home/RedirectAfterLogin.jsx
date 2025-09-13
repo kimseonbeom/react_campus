@@ -6,11 +6,12 @@ export function RedirectAfterLogin() {
   const navigate = useNavigate();
   const user = useAuthStore(state => state.user);
 
- useEffect(() => {
-  if (user?.mem_id) {
+useEffect(() => {
+  const searchParams = new URLSearchParams(window.location.search);
+  if (!searchParams.get("memId") && user?.mem_id) {
     navigate(`/?memId=${user.mem_id}`, { replace: true });
   }
-}, [user]);
+}, [user, navigate]);
 
   return null; // 렌더링할 내용 없음
 }

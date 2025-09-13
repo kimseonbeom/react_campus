@@ -1,328 +1,300 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { ContentBox, Contents, Header, HeadText,  } from '../home/HomeWrapper'
-import { CatTitle, CustomInput, DropHeader, DropList, DropOption, FlexDiv, ListHeader,
-        PageArrowButton, PageNation, PageNumberButton, PageNumText, PageText, SearchBar,
-        SearchDrop, SearchText, RegistButton,
-        } from '../commons/WHComponent';
-import { calender, dropdownArrow, searchIcon, pageArrow1, pageArrow2, pageArrow3, pageArrow4,
-         } from '../img';
+import { ContentBox, Contents, Header, HeadText } from '../home/HomeWrapper'
+import {
+  CatTitle, CustomInput, DropHeader, DropList, DropOption, FlexDiv, ListHeader,
+  PageArrowButton, PageNation, PageNumberButton, PageNumText, PageText, SearchBar,
+  SearchDrop, SearchText, RegistButton,
+} from '../commons/WHComponent';
+import { calender, dropdownArrow, searchIcon, pageArrow1, pageArrow2, pageArrow3, pageArrow4 } from '../img';
 import { Hr } from '../menu/SideMenu';
 import { ContentText, OverviewText } from '../proObject/ProjectObjectProjectList';
 import { Flex } from '../home/HomeWrapperPro';
-import useModalStore from '../commons/modalStore';
+import useModalStore, { useProjectTeamModifyModalStore } from '../commons/modalStore';
 import Toast from '../commons/Toast';
+import { useLocation } from 'react-router-dom';
+import { getProjectTeamList, getUserSession } from '../api';
 
 const LengthLine = styled.div`
-    background-color: #aaa;
-    width: 1px;
-    height: 53px;
-    margin: 0;
+  background-color: #aaa;
+  width: 1px;
+  height: 53px;
+  margin: 0;
 `
+
 const GreenBtn = styled.button`
-    width: 359px;
-    height: 26px;
-    border: 1px solid #2ec4b6;
-    color: #2ec4b6;
-    background-color: #fff;
-    text-align: center;
-    align-items: center;
-    font-size: 13px;
-    font-weight: bold;
+  width: 359px;
+  height: 26px;
+  border: 1px solid #2ec4b6;
+  color: #2ec4b6;
+  background-color: #fff;
+  text-align: center;
+  align-items: center;
+  font-size: 13px;
+  font-weight: bold;
 `
+
 const ModifyingBtn = styled.button`
-    width: 359px;
-    height: 26px;
-    border: 1px solid #9fcec9;
-    color: #fff;
-    background-color: #9fcec9;
-    text-align: center;
-    align-items: center;
-    font-size: 13px;
-    font-weight: bold;
+  width: 359px;
+  height: 26px;
+  border: 1px solid #9fcec9;
+  color: #fff;
+  background-color: #9fcec9;
+  text-align: center;
+  align-items: center;
+  font-size: 13px;
+  font-weight: bold;
 `
+
 const ObjectBtn = styled.button`
-    width: 359px;
-    height: 26px;
-    border: 1px solid #e7e7e7;
-    color: #212121;
-    background-color: #e7e7e7;
-    text-align: center;
-    align-items: center;
-    font-size: 13px;
-    font-weight: bold;
+  width: 359px;
+  height: 26px;
+  border: 1px solid #e7e7e7;
+  color: #212121;
+  background-color: #e7e7e7;
+  text-align: center;
+  align-items: center;
+  font-size: 13px;
+  font-weight: bold;
 `
+
+const ProjectNameText = styled(HeadText)`
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
 function ProjectTeamList() {
-    const [open, setOpen] = useState(false);
-        const [selected, setSelected] = useState("전체");
-        const [startDate, setStartDate] = useState(null);
-        const [endDate, setEndDate] = useState(null);
-        const startInputRef = useRef(null);
-        const endInputRef = useRef(null);
-        const [checked, setChecked] = useState(false);
-        const showConfirm = useModalStore((state) => state.showConfirm);
-        const toggleOpen = () => setOpen(!open);
-        const [toastMsg, setToastMsg] = useState("");
-
-
-        // 옵션 선택
-        const handleSelect = (value) => {
-            setSelected(value);
-            setOpen(false);
-      };
-    const handleRegister = () => {
-  showConfirm("정말 등록하시겠습니까?", () => {
-    console.log("팀 등록 확인됨");
-    setToastMsg("팀이 등록되었습니다 ! ");
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState("전체");
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const startInputRef = useRef(null);
+  const endInputRef = useRef(null);
+  const showConfirm = useModalStore((state) => state.showConfirm);
+  const toggleOpen = () => setOpen(!open);
+  const [toastMsg, setToastMsg] = useState("");
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const memId = query.get('memId');
+  const user = getUserSession();
+  const [projectEditStatusMap, setEditStatusMap] = useState({});
+  const { showModal } = useProjectTeamModifyModalStore();
+  const [pageMaker, setPageMaker] = useState({
+    page: 1,
+    perPageNum: 3,
+    displayPageNum: 10,
+    totalCount: 0,
+    startPage: 1,
+    endPage: 1,
+    realEndPage: 1,
+    prev: false,
+    next: false
   });
-};
+
+  useEffect(() => {
+    if (memId) getProjectTeamData(memId, 1);
+  }, [memId]);
+
+  const fetchProjectTeamData = async (memId, page = 1) => {
+    setLoading(true);
+    try {
+      const response = await getProjectTeamList(memId, page);
+      const resData = response.data;
+      setData(resData.projectList);
+      setEditStatusMap(resData.projectEditStatusMap || {});
+      setPageMaker(resData.pageMaker); // 백엔드 계산 값 그대로 사용
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const getProjectTeamData = async (memId, page = 1) => {
+    await fetchProjectTeamData(memId, page);
+  }
+
+  const handleSelect = (value) => {
+    setSelected(value);
+    setOpen(false);
+  };
+
+  const handleRegister = () => {
+    showConfirm("정말 등록하시겠습니까?", () => {
+      setToastMsg("팀이 등록되었습니다!");
+    });
+  }
+
+  const formatDate = (dateValue) => {
+    if (!dateValue) return "";
+    const d = new Date(dateValue);
+    return d.toLocaleDateString("ko-KR");
+  }
+
+  const handlePageChange = (newPage) => {
+    if (!pageMaker) return;
+    if(newPage < 1 || newPage > pageMaker.realEndPage) return;
+    getProjectTeamData(memId, newPage);
+  }
+
   return (
     <>
-    <div style={{width:"100%", minHeight:"731px", backgroundColor:"#f7f7f7"}}>
-                <ListHeader style={{height:'146px'}}>
-                    <FlexDiv style={{marginLeft:'10px'}}>
-                        <CatTitle>팀목록</CatTitle>
-                        <RegistButton style={{marginLeft:'auto'}} onClick={handleRegister}>팀등록</RegistButton>
-                    </FlexDiv>
-                    <FlexDiv style={{marginTop:'8px'}} >
-                        <div style={{ display: "flex", alignItems: "center", width: "152px", height: "36px" }} >
-                            <DatePicker selected={startDate} onChange={(date) => setStartDate(date)} placeholderText="시작일"
-                                dateFormat="yyyy-MM-dd" customInput={<CustomInput ref={startInputRef}/>}
-                            />
-                            <img src={calender} style={{width:'25px', marginLeft:'-35px', position:'relative'}} alt="calendar"/>
-                        </div>
-                        <div style={{marginLeft:'33px', marginTop:'5px'}}>
-                            ~
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", width: "152px", height: "36px", marginLeft:'7px'}}>
-                            <DatePicker selected={endDate} onChange={(date) => setEndDate(date)} placeholderText="마감일"
-                                dateFormat="yyyy-MM-dd" customInput={<CustomInput ref={endInputRef}/>}
-                            />
-                            <img src={calender} style={{width:'25px', marginLeft:'-35px', position:'relative'}} alt="calendar"/>
-                        </div>
-                    </FlexDiv>
-                    <FlexDiv>
-                        <SearchDrop>
-                            <DropHeader onClick={toggleOpen}>
-                                {selected}
-                                <img src={dropdownArrow} style={{width:"13px", height:"8px", marginLeft:'auto', display:'block', marginTop:'8px'}}></img>
-                            </DropHeader>
-                            {open && (
-                                <DropList>
-                                    <DropOption onClick={() => handleSelect("전체")}>전체</DropOption>
-                                    <DropOption onClick={() => handleSelect("옵션1")}>옵션1</DropOption>
-                                    <DropOption onClick={() => handleSelect("옵션2")}>옵션2</DropOption>
-                                    <DropOption onClick={() => handleSelect("옵션3")}>옵션3</DropOption>
-                                </DropList>
-                            )}
-                        </SearchDrop>
-                        <SearchBar>
-                            <img src={searchIcon} style={{width:'15px', height:'16px', marginBottom:"8px"}}></img>
-                            <SearchText placeholder='검색어를 입력해 주세요.'></SearchText>
-                        </SearchBar>
-                    </FlexDiv>
-                </ListHeader>
-                <ContentBox style={{width:'386px', height:'160px', margin:'0 auto', border:'1px solid #ccc', marginBottom:'10px',marginTop:'13px'}}>
-                    <Header style={{paddingTop:'20px', paddingBottom:'11px', height:'37px', alignItems:'center'}}>
-                        <HeadText style={{fontSize:'14px'}}>
-                            1학기
-                        </HeadText>
-                        <OverviewText style={{marginLeft:'17px',marginBottom:'4px'}}>
-                            2025-09-02 ~ 2025-09-22
-                        </OverviewText>
-                        <HeadText style={{marginLeft:'auto',fontSize:'14px'}}>
-                            Camp_us
-                        </HeadText>
-                    </Header>
-                    <Hr style={{margin:'0 auto', width:'366px'}}></Hr>
-                    <Contents style={{paddingTop:'10px'}}>
-                        <Flex style={{justifyContent: 'flex-start'}}>
-                            <div style={{marginTop:'7px',marginRight:'56px'}}>
-                            <ContentText style={{marginBottom:'15px'}}>
-                            로드맵
-                            </ContentText>
-                            <ContentText>
-                            피드백
-                            </ContentText>
-                            </div>
-                            <div style={{marginTop:'7px',marginRight:'28px'}}>
-                            <ContentText style={{marginBottom:'15px', color:'#2ec4b6'}}>
-                            미제출
-                            </ContentText>
-                            <ContentText style={{color:'#aaa'}}>
-                            미등록
-                            </ContentText>
-                            </div>
-                             <LengthLine />
-                            <div style={{marginTop:'7px',marginLeft:'28px',marginRight:'54px'}}>
-                            <ContentText style={{marginBottom:'15px'}}>
-                            담당교수
-                            </ContentText>
-                            <ContentText>
-                            팀장
-                            </ContentText>
-                            </div>
-                            <div style={{marginTop:'7px'}}>
-                            <ContentText style={{marginBottom:'15px',color:'#aaa'}}>
-                            서형원
-                            </ContentText>
-                            <ContentText style={{color:'#aaa'}}>
-                            김원희
-                            </ContentText>
-                            </div>
-                        </Flex>
-                    </Contents>
-                    <div style={{width:'100%', display:'flex', justifyContent:'center', marginTop:'15px'}}>
-                    <GreenBtn>
-                        수정 요청
-                    </GreenBtn>
+      <div style={{ width: "100%", minHeight: "731px", backgroundColor: "#f7f7f7" }}>
+        {/* 헤더 */}
+        <ListHeader style={{ height: '146px' }}>
+          <FlexDiv style={{ marginLeft: '10px' }}>
+            <CatTitle>팀목록</CatTitle>
+            <RegistButton style={{ marginLeft: 'auto' }} onClick={handleRegister}>팀등록</RegistButton>
+          </FlexDiv>
+
+          {/* 날짜 필터 */}
+          <FlexDiv style={{ marginTop: '8px' }}>
+            <div style={{ display: "flex", alignItems: "center", width: "152px", height: "36px" }} >
+              <DatePicker selected={startDate} onChange={(date) => setStartDate(date)} placeholderText="시작일"
+                dateFormat="yyyy-MM-dd" customInput={<CustomInput ref={startInputRef} />}
+              />
+              <img src={calender} style={{ width: '25px', marginLeft: '-35px', position: 'relative' }} alt="calendar" />
+            </div>
+            <div style={{ marginLeft: '33px', marginTop: '5px' }}>~</div>
+            <div style={{ display: "flex", alignItems: "center", width: "152px", height: "36px", marginLeft: '7px' }}>
+              <DatePicker selected={endDate} onChange={(date) => setEndDate(date)} placeholderText="마감일"
+                dateFormat="yyyy-MM-dd" customInput={<CustomInput ref={endInputRef} />} />
+              <img src={calender} style={{ width: '25px', marginLeft: '-35px', position: 'relative' }} alt="calendar" />
+            </div>
+          </FlexDiv>
+
+          {/* 검색 & 드롭다운 */}
+          <FlexDiv>
+            <SearchDrop>
+              <DropHeader onClick={toggleOpen}>
+                {selected}
+                <img src={dropdownArrow} style={{ width: "13px", height: "8px", marginLeft: 'auto', display: 'block', marginTop: '8px' }} alt="dropdown" />
+              </DropHeader>
+              {open && (
+                <DropList>
+                  <DropOption onClick={() => handleSelect("전체")}>전체</DropOption>
+                  <DropOption onClick={() => handleSelect("옵션1")}>옵션1</DropOption>
+                  <DropOption onClick={() => handleSelect("옵션2")}>옵션2</DropOption>
+                  <DropOption onClick={() => handleSelect("옵션3")}>옵션3</DropOption>
+                </DropList>
+              )}
+            </SearchDrop>
+
+            <SearchBar>
+              <img src={searchIcon} style={{ width: '15px', height: '16px', marginBottom: "8px" }} alt="search" />
+              <SearchText placeholder='검색어를 입력해 주세요.' />
+            </SearchBar>
+          </FlexDiv>
+        </ListHeader>
+
+        {/* 프로젝트 카드 */}
+        {data?.length > 0 ? (
+          data.map((project) => {
+            const isPastEndDate = new Date(project.project_endate) < new Date();
+            const editStatus = projectEditStatusMap[project.project_id]?.[0];
+            return (
+              <ContentBox key={project.project_id} style={{ width: '386px', height: '160px', margin: '0 auto', border: '1px solid #ccc', marginBottom: '10px', marginTop: '13px' }}>
+                <Header style={{ paddingTop: '20px', paddingBottom: '11px', height: '37px', alignItems: 'center' }}>
+                  <HeadText style={{ fontSize: '14px' }}>{project.samester}</HeadText>
+                  <OverviewText style={{ marginLeft: '17px', marginBottom: '4px' }}>
+                    {formatDate(project.project_stdate)} ~ {formatDate(project.project_endate)}
+                  </OverviewText>
+                  <ProjectNameText style={{ marginLeft: 'auto', fontSize: '14px' }}>{project.project_name}</ProjectNameText>
+                </Header>
+                <Hr style={{ margin: '0 auto', width: '366px' }} />
+                <Contents style={{ paddingTop: '10px' }}>
+                  <Flex style={{ justifyContent: 'flex-start' }}>
+                    <div style={{ marginTop: '7px', marginRight: '56px' }}>
+                      <ContentText style={{ marginBottom: '15px' }}>로드맵</ContentText>
+                      <ContentText>피드백</ContentText>
                     </div>
-                </ContentBox>
-                <ContentBox style={{width:'386px', height:'160px', margin:'0 auto', border:'1px solid #ccc', marginBottom:'10px'}}>
-                    <Header style={{paddingTop:'20px', paddingBottom:'11px', height:'37px', alignItems:'center'}}>
-                        <HeadText style={{fontSize:'14px'}}>
-                            1학기
-                        </HeadText>
-                        <OverviewText style={{marginLeft:'17px',marginBottom:'4px'}}>
-                            2025-09-02 ~ 2025-09-22
-                        </OverviewText>
-                        <HeadText style={{marginLeft:'auto',fontSize:'14px'}}>
-                            Camp_us
-                        </HeadText>
-                    </Header>
-                    <Hr style={{margin:'0 auto', width:'366px'}}></Hr>
-                    <Contents style={{paddingTop:'10px'}}>
-                        <Flex style={{justifyContent: 'flex-start'}}>
-                            <div style={{marginTop:'7px',marginRight:'56px'}}>
-                            <ContentText style={{marginBottom:'15px'}}>
-                            로드맵
-                            </ContentText>
-                            <ContentText>
-                            피드백
-                            </ContentText>
-                            </div>
-                            <div style={{marginTop:'7px',marginRight:'28px'}}>
-                            <ContentText style={{marginBottom:'15px', color:'#2ec4b6'}}>
-                            미제출
-                            </ContentText>
-                            <ContentText style={{color:'#aaa'}}>
-                            미등록
-                            </ContentText>
-                            </div>
-                             <LengthLine />
-                            <div style={{marginTop:'7px',marginLeft:'28px',marginRight:'54px'}}>
-                            <ContentText style={{marginBottom:'15px'}}>
-                            담당교수
-                            </ContentText>
-                            <ContentText>
-                            팀장
-                            </ContentText>
-                            </div>
-                            <div style={{marginTop:'7px'}}>
-                            <ContentText style={{marginBottom:'15px',color:'#aaa'}}>
-                            서형원
-                            </ContentText>
-                            <ContentText style={{color:'#aaa'}}>
-                            김원희
-                            </ContentText>
-                            </div>
-                        </Flex>
-                    </Contents>
-                    <div style={{width:'100%', display:'flex', justifyContent:'center', marginTop:'15px'}}>
-                    <ModifyingBtn>
-                        요청중
-                    </ModifyingBtn>
+                    <div style={{ marginTop: '7px', marginRight: '28px' }}>
+                      <ContentText style={{ marginBottom: '15px', color: '#2ec4b6' }}>미제출</ContentText>
+                      <ContentText style={{ color: '#aaa' }}>미등록</ContentText>
                     </div>
-                </ContentBox>
-                <ContentBox style={{width:'386px', height:'160px', margin:'0 auto', border:'1px solid #ccc', marginBottom:'10px'}}>
-                    <Header style={{paddingTop:'20px', paddingBottom:'11px', height:'37px', alignItems:'center'}}>
-                        <HeadText style={{fontSize:'14px'}}>
-                            1학기
-                        </HeadText>
-                        <OverviewText style={{marginLeft:'17px',marginBottom:'4px'}}>
-                            2025-09-02 ~ 2025-09-22
-                        </OverviewText>
-                        <HeadText style={{marginLeft:'auto',fontSize:'14px'}}>
-                            Camp_us
-                        </HeadText>
-                    </Header>
-                    <Hr style={{margin:'0 auto', width:'366px'}}></Hr>
-                    <Contents style={{paddingTop:'10px'}}>
-                        <Flex style={{justifyContent: 'flex-start'}}>
-                            <div style={{marginTop:'7px',marginRight:'56px'}}>
-                            <ContentText style={{marginBottom:'15px'}}>
-                            로드맵
-                            </ContentText>
-                            <ContentText>
-                            피드백
-                            </ContentText>
-                            </div>
-                            <div style={{marginTop:'7px',marginRight:'28px'}}>
-                            <ContentText style={{marginBottom:'15px', color:'#2ec4b6'}}>
-                            미제출
-                            </ContentText>
-                            <ContentText style={{color:'#aaa'}}>
-                            미등록
-                            </ContentText>
-                            </div>
-                             <LengthLine />
-                            <div style={{marginTop:'7px',marginLeft:'28px',marginRight:'54px'}}>
-                            <ContentText style={{marginBottom:'15px'}}>
-                            담당교수
-                            </ContentText>
-                            <ContentText>
-                            팀장
-                            </ContentText>
-                            </div>
-                            <div style={{marginTop:'7px'}}>
-                            <ContentText style={{marginBottom:'15px',color:'#aaa'}}>
-                            서형원
-                            </ContentText>
-                            <ContentText style={{color:'#aaa'}}>
-                            김원희
-                            </ContentText>
-                            </div>
-                        </Flex>
-                    </Contents>
-                    <div style={{width:'100%', display:'flex', justifyContent:'center', marginTop:'15px'}}>
-                    <ObjectBtn>
-                        결과물
-                    </ObjectBtn>
+                    <LengthLine />
+                    <div style={{ marginTop: '7px', marginLeft: '28px', marginRight: '54px' }}>
+                      <ContentText style={{ marginBottom: '15px' }}>담당교수</ContentText>
+                      <ContentText>팀장</ContentText>
                     </div>
-                </ContentBox>
-                <nav>
-                                <PageNation>
-                                    <PageArrowButton>
-                                        <PageText href="#">
-                                            <img src={pageArrow1} style={{width:"13px", height:"10px", marginLeft:'6px'}}></img>
-                                        </PageText>
-                                    </PageArrowButton>
-                                    <PageArrowButton>
-                                        <PageText href="#">
-                                            <img src={pageArrow2} style={{width:"6px", height:"10px", marginLeft:'10px'}}></img>
-                                        </PageText>
-                                    </PageArrowButton>
-                                    <PageNumberButton>
-                                        <PageNumText href="#">1</PageNumText>
-                                    </PageNumberButton>
-                                    <PageArrowButton>
-                                        <PageText href="#">
-                                            <img src={pageArrow3} style={{width:"6px", height:"10px", marginLeft:'10px'}}></img>
-                                        </PageText>
-                                    </PageArrowButton>
-                                    <PageArrowButton>
-                                        <PageText href="#">
-                                            <img src={pageArrow4} style={{width:"13px", height:"10px", marginLeft:'6px'}}></img>
-                                        </PageText>
-                                    </PageArrowButton>
-                                </PageNation>
-                            </nav>
+                    <div style={{ marginTop: '7px' }}>
+                      <ContentText style={{ marginBottom: '15px', color: '#aaa' }}>{project.profes_name}</ContentText>
+                      <ContentText style={{ color: '#aaa' }}>{project.leader_name}</ContentText>
+                    </div>
+                  </Flex>
+                </Contents>
+                <div style={{ width: '100%', display: 'flex', justifyContent: 'center', marginTop: '15px' }}>
+                  {isPastEndDate ? (
+                    <ObjectBtn>결과물</ObjectBtn>
+                  ) : (
+                    editStatus === '요청중' ? <ModifyingBtn>요청중</ModifyingBtn> : <GreenBtn onClick={showModal}>수정 요청</GreenBtn>
+                  )}
                 </div>
-                {toastMsg && <Toast message={toastMsg} onClose={() => setToastMsg("")} />}
-                </>
+              </ContentBox>
+            );
+          })
+        ) : (
+          <p style={{ textAlign: 'center' }}>등록된 프로젝트가 없습니다.</p>
+        )}
+
+        {/* 페이지네이션 */}
+        {pageMaker && (
+          <nav>
+            <PageNation>
+              {/* 처음 페이지 */}
+              <PageArrowButton disabled={pageMaker.page === 1} onClick={() => handlePageChange(1)}>
+                <PageText>
+                  <img src={pageArrow1} style={{ width: "13px", height: "10px", marginLeft: '6px' }} alt="first" />
+                </PageText>
+              </PageArrowButton>
+
+              {/* 이전 블록 */}
+              <PageArrowButton disabled={!pageMaker.prev} onClick={() => handlePageChange(pageMaker.startPage - 1)}>
+                <PageText>
+                  <img src={pageArrow2} style={{ width: "6px", height: "10px", marginLeft: '10px' }} alt="prev-block" />
+                </PageText>
+              </PageArrowButton>
+
+              {/* 페이지 번호 */}
+              {Array.from({ length: pageMaker.endPage - pageMaker.startPage + 1 }, (_, i) => {
+  const page = pageMaker.startPage + i;
+  if(page > pageMaker.realEndPage) return null; // 존재하지 않는 페이지는 렌더링 안함
+  return (
+    <PageNumberButton key={page} onClick={() => handlePageChange(page)}>
+      <PageNumText style={{ fontWeight: page === pageMaker.page ? 'bold' : 'normal' }}>
+        {page}
+      </PageNumText>
+    </PageNumberButton>
+  );
+})}
+
+              {/* 다음 블록 */}
+              <PageArrowButton disabled={!pageMaker.next} onClick={() => handlePageChange(pageMaker.endPage + 1)}>
+                <PageText>
+                  <img src={pageArrow3} style={{ width: "6px", height: "10px", marginLeft: '10px' }} alt="next-block" />
+                </PageText>
+              </PageArrowButton>
+
+              {/* 마지막 페이지 */}
+              <PageArrowButton disabled={pageMaker.page === pageMaker.realEndPage} onClick={() => handlePageChange(pageMaker.realEndPage)}>
+                <PageText>
+                  <img src={pageArrow4} style={{ width: "13px", height: "10px", marginLeft: '6px' }} alt="last" />
+                </PageText>
+              </PageArrowButton>
+            </PageNation>
+          </nav>
+        )}
+
+      </div>
+      {toastMsg && <Toast message={toastMsg} onClose={() => setToastMsg("")} />}
+    </>
   )
 }
 
-export default ProjectTeamList
+export default ProjectTeamList;

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import { Container } from '../topNav/TopNav'
 import { Cancle, pictureMdfBtn, user11 } from '../img'
@@ -6,10 +6,11 @@ import { CatTitle, FlexDiv, RegistButton } from '../commons/WHComponent'
 import { ContentBox, Header, HeadText } from '../home/HomeWrapper'
 import { GreenBox } from '../proObject/ProjectObjectProjectList'
 import { Hr } from '../menu/SideMenu'
-import { useMypageModalStore, usePasswordModalStore } from '../commons/modalStore'
+import { useMypageModalStore, usePasswordModalStore} from '../commons/modalStore'
 import { Overlay } from '../proObject/ProjectObjectFeedback'
 import { ExitButton } from '../lecAtten/AttandanceModal'
 import Toast from '../commons/Toast'
+import MypagePro from './MypagePro'
 
 export const PictureContainer = styled.div`
     width: 100%;
@@ -92,10 +93,16 @@ function Mypage() {
     const [toastMsg, setToastMsg] = useState("");
     const [imgSrc, setImgSrc] = useState(user11);
     const fileInputRef = useRef(null);
+    const [user, setUser] = useState(null);
     const handleBtnClick = () => {
     fileInputRef.current.click();
   };
-
+  useEffect(() => {
+        const storedUser = sessionStorage.getItem("user");
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+    }, []);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -115,6 +122,8 @@ function Mypage() {
   if (!visible) return null;
   return (
     <>
+    {user.mem_auth?.includes("ROLE01") ? (
+        <>
     <Overlay>
    <Container style={{backgroundColor:'#fff',display:'flex', justifyContent:'space-between', alignItems:'center'}}>
            <ExitButton style={{width:'19px', height:'19px', margin:'0'}} onClick={hideModal}>
@@ -347,7 +356,10 @@ function Mypage() {
         </Wrap>
         </Overlay>
         {toastMsg && <Toast message={toastMsg} onClose={() => setToastMsg("")} />}
-
+            </>
+    ) : (
+        <MypagePro></MypagePro>
+    )}
     </>
   )
 }

@@ -6,6 +6,9 @@ import "react-datepicker/dist/react-datepicker.css";
 import { Cancle, searchIcon, calender, radioCheck, searchbtn } from "../img";
 import { Container } from "../topNav/TopNav";
 import { Button, CustomInput, FlexDiv, MJCustomInput } from "../commons/WHComponent";
+import { ExitButton } from "../lecAtten/AttandanceModal";
+import { Overlay } from "../proObject/ProjectObjectFeedback";
+import { useProjectTeamModifyModalStore } from "../commons/modalStore";
 
 const GlobalFix = createGlobalStyle`
   .react-datepicker-wrapper,
@@ -195,14 +198,18 @@ export default function ProjectTeamModify() {
   const [endDate, setEndDate] = useState(null);
   const startInputRef = useRef(null);
   const endInputRef = useRef(null);
-
+const { visible, hideModal } = useProjectTeamModifyModalStore();
+if (!visible) return null;
   return (
+    <Overlay>
     <Page>
       <GlobalFix />
 
       <TopSection>
         <Container style={{backgroundColor:'#fff',display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-            <img src={Cancle} style={{width:'19px', height:'19px', cursor:'pointer'}}></img>
+            <ExitButton style={{width:'19px', height:'19px', margin:'0'}} onClick={hideModal}>
+                            <img src={Cancle} style={{ width: '19px', height: '19px' }} />
+                        </ExitButton>
             <Button>등록</Button>
         </Container>
 
@@ -281,5 +288,6 @@ export default function ProjectTeamModify() {
         <BottomLine />
       </BottomSection>
     </Page>
+    </Overlay>
   );
 }

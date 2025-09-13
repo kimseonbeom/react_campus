@@ -7,7 +7,9 @@ export function getHomeworklist() {
 export function getStudent(memId){
   return axios.get(`/api/student?memId=${memId}`)
 }
-
+export function getProjectTeamList(memId, page = 1) {
+  return axios.get(`/api/project/list/stu?memId=${memId}&page=${page}`);
+}
 export function checkSession() {
   return axios.get('/api/login/check');
 }
