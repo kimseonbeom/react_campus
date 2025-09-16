@@ -1,4 +1,4 @@
-import React, { useState, forwardRef, useRef } from "react";
+import React, { useState, forwardRef, useRef, useEffect } from "react";
 import styled, { createGlobalStyle } from "styled-components";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -9,6 +9,7 @@ import { Button, CustomInput, FlexDiv, MJCustomInput } from "../commons/WHCompon
 import { ExitButton } from "../lecAtten/AttandanceModal";
 import { Overlay } from "../proObject/ProjectObjectFeedback";
 import { useProjectTeamModifyModalStore } from "../commons/modalStore";
+import { getProjectDetail, requestProjectModify } from "../api";
 
 const GlobalFix = createGlobalStyle`
   .react-datepicker-wrapper,
@@ -198,10 +199,67 @@ export default function ProjectTeamModify() {
   const [endDate, setEndDate] = useState(null);
   const startInputRef = useRef(null);
   const endInputRef = useRef(null);
-const { visible, hideModal } = useProjectTeamModifyModalStore();
-if (!visible) return null;
+const { visible, hideModal,project_id  } = useProjectTeamModifyModalStore();
+const [project, setProject] = useState(null);
+const [reason, setReason] = useState("");
+const [loading, setLoading] = useState(false);
+
+useEffect(() => {
+  if (visible && project_id) {
+    setLoading(true); 
+    getProjectDetail(project_id).then((res) => {
+      const p = res.data.projectList?.[0];
+      setProject(p);
+
+      // 서버에서 오는 밀리초 timestamp → Date 객체로 변환
+      if (p?.project_stdate) setStartDate(new Date(p.project_stdate));
+      if (p?.project_endate) setEndDate(new Date(p.project_endate));
+    })
+    .finally(() => setLoading(false));
+  }
+}, [visible, project_id]);
+const handleSubmit = async () => {
+  if (!project) return;
+
+  try {
+    const payload = {
+  project_id: project.project_id,
+  project_name: project.project_name,
+  profes_id: project.profes_id,
+  samester: project.samester,
+  project_desc: project.project_desc,
+  project_stdate: startDate
+    ? startDate.toISOString().split("T")[0]  // 문자열로 변환
+    : project.project_stdate,
+  project_endate: endDate
+    ? endDate.toISOString().split("T")[0]    // 문자열로 변환
+    : project.project_endate,
+  team_id: project.team_id,
+  team_member_ids: project.mem_id || "",   // 문자열 그대로
+  team_member_names: Array.isArray(project.mem_name)
+    ? project.mem_name.join(", ")          // 문자열로 변환
+    : project.mem_name || "",
+  team_leader: project.team_leader,
+  leader_name: project.leader_name,
+  edit_content: reason,
+};
+    await requestProjectModify(payload);
+    alert("✅ 수정 요청이 등록되었습니다.");
+    if (typeof window.refreshProjectTeamList === "function") {
+      window.refreshProjectTeamList();
+    }
+    hideModal();
+  } catch (err) {
+    console.error("❌ 수정 요청 실패:", err);
+    alert("수정 요청에 실패했습니다.");
+  }
+};
+  if (!visible) return null;
   return (
     <Overlay>
+      {loading ? (
+      <div style={{ padding: 20, textAlign: "center" }}>Loading...</div>
+    ) : (
     <Page>
       <GlobalFix />
 
@@ -210,13 +268,13 @@ if (!visible) return null;
             <ExitButton style={{width:'19px', height:'19px', margin:'0'}} onClick={hideModal}>
                             <img src={Cancle} style={{ width: '19px', height: '19px' }} />
                         </ExitButton>
-            <Button>등록</Button>
+            <Button onClick={handleSubmit}>등록</Button>
         </Container>
 
         <TopContent>
           <Row>
-            <Label>프로젝트명</Label>
-            <Input placeholder="클라우드 기반 협업 플랫폼" />
+            <Label>프로젝트명</Label> 
+            <Input defaultValue={project?.project_name || ""} />
           </Row>
           <FlexDiv style={{marginBottom:'-5px'}}>
             <Label>시작일</Label>
@@ -259,24 +317,24 @@ if (!visible) return null;
 
           <Row>
             <Label>담당교수</Label>
-            <Input defaultValue="서형원" />
+            <Input defaultValue={project?.profes_name || ""} />
           </Row>
 
           <Row>
             <Label>팀장</Label>
-            <Input defaultValue="김원희" />
+            <Input defaultValue={project?.leader_name || ""} />
             <SearchBtn aria-label="팀장 검색" />
           </Row>
 
           <Row>
             <Label>팀원</Label>
-            <Input defaultValue="권오규, 김민주, 김선범" />
+            <Input defaultValue={(project?.mem_name || []).join(", ")} />
             <SearchBtn aria-label="팀원 검색" />
           </Row>
 
           <SectionLabel>내용</SectionLabel>
           <Divider />
-          <PlainText>내용입니다.</PlainText>
+          <PlainText>{project?.project_desc || ""}</PlainText>
         </TopContent>
       </TopSection>
 
@@ -284,10 +342,13 @@ if (!visible) return null;
 
       <BottomSection>
         <SubHeader>수정 사유</SubHeader>
-        <ReasonArea placeholder="수정 사유를 입력해주세요." />
+        <ReasonArea placeholder = "수정 사유를 입력해주세요."
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}/>
         <BottomLine />
       </BottomSection>
     </Page>
+    )}
     </Overlay>
   );
 }

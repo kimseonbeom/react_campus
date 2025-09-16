@@ -96,7 +96,47 @@ export const useAuthStore = create(
 )
 export const useProjectTeamModifyModalStore = create((set) => ({
   visible: false,
+  project_id: null,
+  showModal: (project_id) => set({ visible: true, project_id }), 
+  hideModal: () => set({ visible: false, project_id: null }),
+}));
+export const useProjectTeamModifyCheckModalStore = create((set) => ({
+  visible: false,
+  project_id: null,
+  showModal: (id) => set({ visible: true, project_id: id }),
+  hideModal: () => set({ visible: false, project_id: null }),
+}));
+export const useProjectTeamRegistModalStore = create((set) => ({
+  visible: false,
   showModal: () => set({ visible: true }),
   hideModal: () => set({ visible: false }),
 }));
+export const useTeamSearchModalStore = create((set) => ({
+  visible: false,
+  selectedTeamLeader: null,
+  showModal: () => set({ visible: true }),
+  hideModal: () => set({ visible: false }),
+   setSelectedTeamLeader: (prof) => set({ selectedTeamLeader: prof })
+}));
+export const useTeamMemberModalStore = create((set) => ({
+  visible: false,
+  selectedTeamMember: [],
+  showModal: () => set({ visible: true }),
+  hideModal: () => set({ visible: false }),
+  // prof 혹은 members 중 하나를 전달
+  setSelectedTeamMember: (membersOrProf) =>
+    set({
+      selectedTeamMember: Array.isArray(membersOrProf)
+        ? membersOrProf
+        : [membersOrProf], // 단일 객체도 배열로 감싸서 저장
+    }),
+}));
+export const useTeamProfessorModalStore = create((set) => ({
+  visible: false,
+  selectedProfessor: null,
+  showModal: () => set({ visible: true }),
+  hideModal: () => set({ visible: false }),
+  setSelectedProfessor: (prof) => set({ selectedProfessor: prof })
+}));
+
 export default useModalStore;

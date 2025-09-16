@@ -12,7 +12,7 @@ import { calender, dropdownArrow, searchIcon, pageArrow1, pageArrow2, pageArrow3
 import { Hr } from '../menu/SideMenu';
 import { ContentText, OverviewText } from '../proObject/ProjectObjectProjectList';
 import { Flex } from '../home/HomeWrapperPro';
-import useModalStore, { useProjectTeamModifyModalStore } from '../commons/modalStore';
+import useModalStore, { useProjectTeamModifyModalStore, useProjectTeamRegistModalStore } from '../commons/modalStore';
 import Toast from '../commons/Toast';
 import { useLocation } from 'react-router-dom';
 import { getProjectTeamList, getUserSession } from '../api';
@@ -60,7 +60,7 @@ const ObjectBtn = styled.button`
   font-weight: bold;
 `
 
-const ProjectNameText = styled(HeadText)`
+export const ProjectNameText = styled(HeadText)`
   max-width: 100px;
   white-space: nowrap;
   overflow: hidden;
@@ -68,12 +68,16 @@ const ProjectNameText = styled(HeadText)`
 `;
 
 function ProjectTeamList() {
+  const [projectStDate, setProjectStDate] = useState('');
+  const [projectEnDate, setProjectEnDate] = useState('');
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState("전체");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchSamester, setSearchSamester] = useState('');
+  const [searchProjectName, setSearchProjectName] = useState('');
   const startInputRef = useRef(null);
   const endInputRef = useRef(null);
   const showConfirm = useModalStore((state) => state.showConfirm);
@@ -84,7 +88,8 @@ function ProjectTeamList() {
   const memId = query.get('memId');
   const user = getUserSession();
   const [projectEditStatusMap, setEditStatusMap] = useState({});
-  const { showModal } = useProjectTeamModifyModalStore();
+  const { showModal: showModifyModal } = useProjectTeamModifyModalStore();
+  const { showModal: showRegistModal } = useProjectTeamRegistModalStore();
   const [pageMaker, setPageMaker] = useState({
     page: 1,
     perPageNum: 3,
@@ -98,32 +103,45 @@ function ProjectTeamList() {
   });
 
   useEffect(() => {
-    if (memId) getProjectTeamData(memId, 1);
+    if (memId) getProjectTeamData(memId, 1,'', '','','');
   }, [memId]);
-
-  const fetchProjectTeamData = async (memId, page = 1) => {
-    setLoading(true);
-    try {
-      const response = await getProjectTeamList(memId, page);
-      const resData = response.data;
-      setData(resData.projectList);
-      setEditStatusMap(resData.projectEditStatusMap || {});
-      setPageMaker(resData.pageMaker); // 백엔드 계산 값 그대로 사용
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+  window.refreshProjectTeamList = () => {
+    const stDate = startDate ? startDate.toISOString().split('T')[0] : '';
+    const enDate = endDate ? endDate.toISOString().split('T')[0] : '';
+    getProjectTeamData(memId, 1, searchSamester, searchProjectName, stDate, enDate);
+  };
+  return () => { window.refreshProjectTeamList = undefined; };
+}, [memId, searchSamester, searchProjectName, startDate, endDate]);
+  const fetchProjectTeamData = async (memId, page = 1, samester = '', projectName = '',projectStdate = '', projectEndate = '') => {
+  setLoading(true);
+  try {
+    const response = await getProjectTeamList(memId, page, samester, projectName || '',projectStdate || '', projectEndate || ''); 
+    const resData = response.data;
+    console.log('API Response:', resData);
+    setData(resData.projectList || []); 
+    setEditStatusMap(resData.projectEditStatusMap || {});
+    setPageMaker(resData.pageMaker || {});
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
   }
+}
 
-  const getProjectTeamData = async (memId, page = 1) => {
-    await fetchProjectTeamData(memId, page);
+  const getProjectTeamData = async (memId, page = 1, samester = '', projectName = '',projectStdate = '', projectEndate = '') => {
+    await fetchProjectTeamData(memId, page, samester, projectName,projectStdate,projectEndate);
   }
 
   const handleSelect = (value) => {
     setSelected(value);
-    setOpen(false);
-  };
+  if (value === "전체") {
+    setSearchSamester("");
+  } else {
+    setSearchSamester(value);
+  }
+  setOpen(false);
+};
 
   const handleRegister = () => {
     showConfirm("정말 등록하시겠습니까?", () => {
@@ -131,18 +149,21 @@ function ProjectTeamList() {
     });
   }
 
-  const formatDate = (dateValue) => {
-    if (!dateValue) return "";
-    const d = new Date(dateValue);
-    return d.toLocaleDateString("ko-KR");
-  }
+const formatDate = (dateValue) => dateValue ? new Date(dateValue).toLocaleDateString("sv-SE") : "";
 
   const handlePageChange = (newPage) => {
-    if (!pageMaker) return;
-    if(newPage < 1 || newPage > pageMaker.realEndPage) return;
-    getProjectTeamData(memId, newPage);
-  }
+  if (!pageMaker) return;
+  if(newPage < 1 || newPage > pageMaker.realEndPage) return;
+ const stDate = startDate ? startDate.toISOString().split('T')[0] : '';
+  const enDate = endDate ? endDate.toISOString().split('T')[0] : '';
 
+  getProjectTeamData(memId, newPage, searchSamester, searchProjectName,stDate, enDate);
+}
+const handleSearch = () => {
+    const stDate = startDate ? startDate.toISOString().split('T')[0] : '';
+  const enDate = endDate ? endDate.toISOString().split('T')[0] : '';
+  getProjectTeamData(memId, 1, searchSamester, searchProjectName, stDate, enDate); // 1페이지부터 검색
+}
   return (
     <>
       <div style={{ width: "100%", minHeight: "731px", backgroundColor: "#f7f7f7" }}>
@@ -150,7 +171,7 @@ function ProjectTeamList() {
         <ListHeader style={{ height: '146px' }}>
           <FlexDiv style={{ marginLeft: '10px' }}>
             <CatTitle>팀목록</CatTitle>
-            <RegistButton style={{ marginLeft: 'auto' }} onClick={handleRegister}>팀등록</RegistButton>
+            <RegistButton style={{ marginLeft: 'auto' }} onClick={showRegistModal}>팀등록</RegistButton>
           </FlexDiv>
 
           {/* 날짜 필터 */}
@@ -179,16 +200,20 @@ function ProjectTeamList() {
               {open && (
                 <DropList>
                   <DropOption onClick={() => handleSelect("전체")}>전체</DropOption>
-                  <DropOption onClick={() => handleSelect("옵션1")}>옵션1</DropOption>
-                  <DropOption onClick={() => handleSelect("옵션2")}>옵션2</DropOption>
-                  <DropOption onClick={() => handleSelect("옵션3")}>옵션3</DropOption>
+                  <DropOption onClick={() => handleSelect("1학기")}>1학기</DropOption>
+                  <DropOption onClick={() => handleSelect("2학기")}>2학기</DropOption>
                 </DropList>
               )}
             </SearchDrop>
 
             <SearchBar>
               <img src={searchIcon} style={{ width: '15px', height: '16px', marginBottom: "8px" }} alt="search" />
-              <SearchText placeholder='검색어를 입력해 주세요.' />
+              <SearchText
+                placeholder='검색어를 입력해 주세요.'
+                value={searchProjectName}
+                onChange={(e) => setSearchProjectName(e.target.value)}
+                onKeyDown={(e) => { if(e.key === 'Enter') handleSearch(); }}
+                />
             </SearchBar>
           </FlexDiv>
         </ListHeader>
@@ -233,7 +258,7 @@ function ProjectTeamList() {
                   {isPastEndDate ? (
                     <ObjectBtn>결과물</ObjectBtn>
                   ) : (
-                    editStatus === '요청중' ? <ModifyingBtn>요청중</ModifyingBtn> : <GreenBtn onClick={showModal}>수정 요청</GreenBtn>
+                    editStatus === '요청중' ? <ModifyingBtn>요청중</ModifyingBtn> : <GreenBtn onClick={() => showModifyModal(project.project_id)}>수정 요청</GreenBtn>
                   )}
                 </div>
               </ContentBox>
@@ -243,45 +268,45 @@ function ProjectTeamList() {
           <p style={{ textAlign: 'center' }}>등록된 프로젝트가 없습니다.</p>
         )}
 
-        {/* 페이지네이션 */}
+
         {pageMaker && (
           <nav>
             <PageNation>
-              {/* 처음 페이지 */}
               <PageArrowButton disabled={pageMaker.page === 1} onClick={() => handlePageChange(1)}>
                 <PageText>
                   <img src={pageArrow1} style={{ width: "13px", height: "10px", marginLeft: '6px' }} alt="first" />
                 </PageText>
               </PageArrowButton>
 
-              {/* 이전 블록 */}
+              
               <PageArrowButton disabled={!pageMaker.prev} onClick={() => handlePageChange(pageMaker.startPage - 1)}>
                 <PageText>
                   <img src={pageArrow2} style={{ width: "6px", height: "10px", marginLeft: '10px' }} alt="prev-block" />
                 </PageText>
               </PageArrowButton>
 
-              {/* 페이지 번호 */}
-              {Array.from({ length: pageMaker.endPage - pageMaker.startPage + 1 }, (_, i) => {
+             
+{Array.from({ length: pageMaker.endPage - pageMaker.startPage + 1 }, (_, i) => {
   const page = pageMaker.startPage + i;
-  if(page > pageMaker.realEndPage) return null; // 존재하지 않는 페이지는 렌더링 안함
+  if(page > pageMaker.realEndPage) return null;
   return (
-    <PageNumberButton key={page} onClick={() => handlePageChange(page)}>
-      <PageNumText style={{ fontWeight: page === pageMaker.page ? 'bold' : 'normal' }}>
-        {page}
-      </PageNumText>
+    <PageNumberButton
+      key={page}
+      active={page === pageMaker.page}
+      onClick={() => handlePageChange(page)}
+    >
+      {page}
     </PageNumberButton>
   );
 })}
-
-              {/* 다음 블록 */}
+              
               <PageArrowButton disabled={!pageMaker.next} onClick={() => handlePageChange(pageMaker.endPage + 1)}>
                 <PageText>
                   <img src={pageArrow3} style={{ width: "6px", height: "10px", marginLeft: '10px' }} alt="next-block" />
                 </PageText>
               </PageArrowButton>
 
-              {/* 마지막 페이지 */}
+              
               <PageArrowButton disabled={pageMaker.page === pageMaker.realEndPage} onClick={() => handlePageChange(pageMaker.realEndPage)}>
                 <PageText>
                   <img src={pageArrow4} style={{ width: "13px", height: "10px", marginLeft: '6px' }} alt="last" />

@@ -7,8 +7,51 @@ export function getHomeworklist() {
 export function getStudent(memId){
   return axios.get(`/api/student?memId=${memId}`)
 }
-export function getProjectTeamList(memId, page = 1) {
-  return axios.get(`/api/project/list/stu?memId=${memId}&page=${page}`);
+export const registerProject = (payload) => {
+  return axios.post("/api/project/regist", payload);
+};
+export const getProjectRegistData = () => {
+  return axios.get("/api/project/regist"); 
+};
+export const getProjectDetail = (project_id) => {
+  return axios.get(`/api/project/modify/stu?project_id=${project_id}`)
+}
+export const requestProjectModify = (payload) => {
+  return axios.post("/api/project/modify/stu", payload);
+};
+export const getModifyCheck = (project_id) => {
+  return axios.get(`/api/project/modify/pro?project_id=${project_id}`)
+}
+export const modifyProjectTeamCheck = (payload) => {
+  return axios.post("/api/project/modify/pro", payload);
+  
+};
+export const getProjectTeamListPro = (memId, page = 1, samester = '', projectName = '',projectStDate = '',  projectEnDate = '', perPageNum = 3 ) => {
+  
+  return axios.get('/api/project/list/pro', {
+    params: {
+      memId,
+      page,
+      samester,
+      project_name: projectName || '', // 검색 안 해도 빈 문자열 보내기
+      project_stdate: projectStDate || '',
+      project_endate: projectEnDate || '',
+      perPageNum
+    }
+    
+  });
+}
+export const getProjectTeamList = (memId, page = 1, samester = '', projectName = '',projectStDate = '',  projectEnDate = '') => {
+  return axios.get('/api/project/list/stu', {
+    params: {
+      memId,
+      page,
+      samester,
+      project_name: projectName || '', // 검색 안 해도 빈 문자열 보내기
+      project_stdate: projectStDate || '',
+      project_endate: projectEnDate || ''
+    }
+  });
 }
 export function checkSession() {
   return axios.get('/api/login/check');

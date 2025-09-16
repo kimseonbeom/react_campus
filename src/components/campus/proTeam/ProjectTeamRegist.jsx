@@ -7,6 +7,10 @@ import { Cancle, searchIcon, calender, searchbtn } from "../img";
 import { Container } from "../topNav/TopNav";
 import { Button } from "../commons/WHComponent";
 import { RadioButton, RadioLabel, RadioMark, RadioWrap } from "./ProjectTeamModify";
+import { Overlay } from "../proObject/ProjectObjectFeedback";
+import { useProjectTeamRegistModalStore, useTeamMemberModalStore, useTeamProfessorModalStore, useTeamSearchModalStore } from "../commons/modalStore";
+import { ExitButton } from "../lecAtten/AttandanceModal";
+import { getUserSession, registerProject } from "../api";
 
 const Page = styled.div`
   width: 412px;
@@ -48,7 +52,7 @@ const Gap = styled.div` height: 15px; background: #f3f3f3; `;
 const Row = styled.div`
   display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
 `;
-const Label = styled.div`
+export const Label = styled.div`
   width: 64px; font-size: 13px; font-weight: 600; color: #3b3b3b; 
 `;
 
@@ -104,13 +108,13 @@ const Radios = styled.div`
   input { margin-right: 6px; }
 `;
 
-const TextInput = styled.input`
+export const TextInput = styled.input`
   flex: 1; height: 34px;
   border: 1px solid #d6d6d6; border-radius: 5px;
   padding: 0 10px; font-size: 13px; color: #333; outline: none;
   ::placeholder { color: #bdbdbd; }
 `;
-const SearchBtn = styled.button`
+export const SearchBtn = styled.button`
   width: 34px; height: 34px; border: 0; padding: 0;
   background: url(${searchbtn}) center / 100% 100% no-repeat transparent;
   cursor: pointer;
@@ -142,16 +146,69 @@ const DPInput = forwardRef(({ value, onClick, placeholder }, ref) => (
 ));
 
 export default function ProjectTeamRegist() {
+  const { selectedProfessor } = useTeamProfessorModalStore();
+const { selectedTeamLeader } = useTeamSearchModalStore();
+const { selectedTeamMember } = useTeamMemberModalStore();
+
+  const professor = selectedProfessor?.mem_name ?? "";
+const leader = selectedTeamLeader?.mem_name ?? "";
+const members = selectedTeamMember?.map(m => m.mem_name) ?? [];
+
   const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate]     = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
+  const [term, setTerm] = useState("1학기");
+  const [projectName, setProjectName] = useState("");
+  const [content, setContent] = useState("");
+  const { showModal: showTeamModal } = useTeamSearchModalStore();
+  const { showModal: showTeamMemberModal } = useTeamMemberModalStore();
+  const { showModal: showProfessorModal } = useTeamProfessorModalStore();
+  const user = getUserSession();
   const startRef = useRef(null);
   const endRef   = useRef(null);
+   
+const handleSubmit = async () => {
+  try {
+    if (!selectedProfessor || !selectedTeamLeader || selectedTeamMember.length === 0) {
+      alert("교수, 팀장, 팀원을 모두 선택해주세요.");
+      return;
+    }
 
+    // 서버가 기대하는 payload 구조
+    const payload = {
+      project_name: projectName,
+      project_desc: content,
+      project_stdate: startDate.toISOString().split("T")[0],
+      project_endate: endDate.toISOString().split("T")[0],
+      profes_id: selectedProfessor.mem_id,
+      samester: term,
+      team_leader: selectedTeamLeader.mem_id,
+      stu_id_list: selectedTeamMember.map(m => m.mem_id)  // 배열로
+    };
+
+    // 프로젝트 + 팀장 + 팀원 모두 한 번에 전송
+    const res = await registerProject(payload);
+    if (typeof window.refreshProjectTeamList === "function") {
+      window.refreshProjectTeamList();
+    }
+    alert("프로젝트 등록 완료!");
+    hideModal();
+
+  } catch (err) {
+    console.error("프로젝트 등록 실패:", err);
+    alert("프로젝트 등록 실패: 서버 에러 확인");
+  }
+};
+
+const { visible, hideModal } = useProjectTeamRegistModalStore();
+if (!visible) return null;
   return (
+    <Overlay>
     <Page>
       <Container style={{backgroundColor:'#fff',display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-          <img src={Cancle} style={{width:'19px', height:'19px', cursor:'pointer'}}></img>
-          <Button>등록</Button>
+          <ExitButton style={{width:'19px', height:'19px', margin:'0'}} onClick={hideModal}>
+            <img src={Cancle} style={{ width: '19px', height: '19px' }} />
+          </ExitButton>
+          <Button onClick={handleSubmit}>등록</Button>
       </Container>
 
       <TopSection style={{marginTop:'-20px'}}>
@@ -187,12 +244,19 @@ export default function ProjectTeamRegist() {
             <Label>학기</Label>
             <RadioWrap>
               <RadioLabel>
-                <RadioButton name="term" defaultChecked />
+                <RadioButton name="term"
+                value="1학기"
+                checked={term === "1학기"}
+                onChange={(e) => setTerm(e.target.value)}/>
                 <RadioMark />
                 <span>1학기</span>
               </RadioLabel>
               <RadioLabel>
-                <RadioButton name="term" />
+                <RadioButton name="term" 
+                value="2학기"
+                checked={term === "2학기"}
+                onChange={(e) => setTerm(e.target.value)}
+                />
                 <RadioMark />
                 <span>2학기</span>
               </RadioLabel>
@@ -201,20 +265,20 @@ export default function ProjectTeamRegist() {
 
           <Row>
             <Label>담당교수</Label>
-            <TextInput placeholder="담당교수를 등록해주세요." />
-            <SearchBtn aria-label="담당교수 검색" />
+            <TextInput placeholder="담당교수를 등록해주세요." readOnly value={professor}/>
+            <SearchBtn aria-label="담당교수 검색" onClick={showProfessorModal} />
           </Row>
 
           <Row>
             <Label>팀장</Label>
-            <TextInput placeholder="팀장을 등록해주세요." />
-            <SearchBtn aria-label="팀장 검색" />
+            <TextInput placeholder="팀장을 등록해주세요." readOnly value={leader}/>
+            <SearchBtn aria-label="팀장 검색"  onClick={showTeamModal} />
           </Row>
 
           <Row>
             <Label>팀원</Label>
-            <TextInput placeholder="팀원을 등록해주세요." />
-            <SearchBtn aria-label="팀원 검색" />
+            <TextInput placeholder="팀원을 등록해주세요." readOnly value={members.join(", ")}/>
+            <SearchBtn aria-label="팀원 검색" onClick={showTeamMemberModal}/>
           </Row>
         </SectionInner>
       </TopSection>
@@ -223,11 +287,18 @@ export default function ProjectTeamRegist() {
 
       <BottomSection>
         <SectionInner>
-          <UnderlineInput style={{marginTop:"-10px"}} placeholder="프로젝트명을 입력해주세요." />
-          <UnderlineArea placeholder="내용을 입력해주세요." />
+          <UnderlineInput style={{marginTop:"-10px"}} placeholder="프로젝트명을 입력해주세요." 
+          value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+          />
+          <UnderlineArea placeholder="내용을 입력해주세요." 
+          value={content}
+              onChange={(e) => setContent(e.target.value)}
+          />
           <BottomLine />
         </SectionInner>
       </BottomSection>
     </Page>
+    </Overlay>
   );
 }

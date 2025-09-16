@@ -88,6 +88,9 @@ import { useAuthStore } from './commons/modalStore'
 import Loading from './commons/Loading'
 import Login from './commons/Login'
 import { RedirectAfterLogin } from './home/RedirectAfterLogin'
+import TeamSearch from './proTeam/TeamSearch'
+import TeamMemberSearch from './proTeam/TeamMemberSearch'
+import ProfessorSearch from './proTeam/ProfessorSearch'
 
 function CampusMain() {
   const isLoggedIn = useAuthStore(state => state.isLoggedIn)
@@ -169,6 +172,11 @@ function CampusMain() {
       <LecturePlanRegist/>
       <ChangePasswordModal/>
       <ProjectTeamModify/>
+      <ProjectTeamRegist/>
+      <TeamSearch/>
+      <TeamMemberSearch />
+      <ProfessorSearch/>
+      <ProjectTeamModifyCheck/>
       </>
       )}
       

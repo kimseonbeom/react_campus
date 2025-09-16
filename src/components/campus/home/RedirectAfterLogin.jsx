@@ -7,9 +7,14 @@ export function RedirectAfterLogin() {
   const user = useAuthStore(state => state.user);
 
 useEffect(() => {
-  const searchParams = new URLSearchParams(window.location.search);
-  if (!searchParams.get("memId") && user?.mem_id) {
-    navigate(`/?memId=${user.mem_id}`, { replace: true });
+  if (user?.mem_id) {
+    const searchParams = new URLSearchParams(window.location.search);
+    const currentMemId = searchParams.get("memId");
+
+    if (currentMemId !== user.mem_id) {
+      // URL을 항상 현재 계정으로 업데이트
+      navigate(`/?memId=${user.mem_id}`, { replace: true });
+    }
   }
 }, [user, navigate]);
 

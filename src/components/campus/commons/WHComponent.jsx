@@ -129,16 +129,20 @@ export const PageArrowButton = styled.li`
     list-style: none;
 `
 export const PageNumberButton = styled.li`
-    width: 28px;
-    height: 28px;
-    border-radius: 5px;
-    background-color: transparent;
-    list-style: none;
-    &:active{
-        background-color: #2EC4B6;
-        border: none;
-    }
-`
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: ${(props) => props.active ? '#2EC4B6' : 'transparent'};
+  color: ${(props) => props.active ? '#fff' : '#000'};
+  cursor: pointer;
+  &:hover {
+    background-color: ${(props) => props.active ? '#2EC4B6' : '#e0e0e0'};
+  }
+`;
 export const PageText = styled.a`
     text-align: center;
     font-size: 15px;
