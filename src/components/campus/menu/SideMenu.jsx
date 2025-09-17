@@ -325,7 +325,7 @@ async function getStudentData(memId) {
     <StyledLink to={`/project/team?memId=${user.mem_id}`} onClick={closeMenu}>
       <li className="nav-item"><p style={{ marginLeft: '80px', marginTop: '15px'}}>팀 목록</p></li>
       </StyledLink>
-       <StyledLink to='/project/object' onClick={closeMenu}>
+       <StyledLink to={`/project/object?memId=${user.mem_id}`} onClick={closeMenu}>
       <li className="nav-item"><p style={{ marginLeft: '80px', marginTop: '15px'}}>결과물</p></li>
       </StyledLink>
     </Submenu>

@@ -8,7 +8,7 @@ import { Container } from "../topNav/TopNav";
 import { Button, CustomInput, FlexDiv, MJCustomInput } from "../commons/WHComponent";
 import { ExitButton } from "../lecAtten/AttandanceModal";
 import { Overlay } from "../proObject/ProjectObjectFeedback";
-import { useProjectTeamModifyModalStore } from "../commons/modalStore";
+import { useProjectTeamModifyModalStore, useTeamMemberModalStore, useTeamProfessorModalStore, useTeamSearchModalStore } from "../commons/modalStore";
 import { getProjectDetail, requestProjectModify } from "../api";
 
 const GlobalFix = createGlobalStyle`
@@ -203,6 +203,17 @@ const { visible, hideModal,project_id  } = useProjectTeamModifyModalStore();
 const [project, setProject] = useState(null);
 const [reason, setReason] = useState("");
 const [loading, setLoading] = useState(false);
+  const { selectedProfessor } = useTeamProfessorModalStore();
+const { selectedTeamLeader } = useTeamSearchModalStore();
+const { selectedTeamMember } = useTeamMemberModalStore();
+  const { showModal: openTeamLeaderModal } = useTeamSearchModalStore();
+  const { showModal: openTeamMemberModal } = useTeamMemberModalStore();
+  const stripHtmlTags = (html) => html?.replace(/<\/?[^>]+(>|$)/g, "") || "";
+const [projectName, setProjectName] = useState("");
+const [samester, setSamester] = useState(""); // 학기
+const [projectDesc, setProjectDesc] = useState("");
+const [leaderName, setLeaderName] = useState("");
+const [memberNames, setMemberNames] = useState([]);
 
 useEffect(() => {
   if (visible && project_id) {
@@ -211,9 +222,16 @@ useEffect(() => {
       const p = res.data.projectList?.[0];
       setProject(p);
 
-      // 서버에서 오는 밀리초 timestamp → Date 객체로 변환
       if (p?.project_stdate) setStartDate(new Date(p.project_stdate));
       if (p?.project_endate) setEndDate(new Date(p.project_endate));
+
+      setProjectName(p?.project_name || "");
+      setSamester(p?.samester || "1학기");
+      setProjectDesc(p?.project_desc || "");
+      setLeaderName(p?.leader_name || "");
+      setMemberNames(
+        Array.isArray(p?.mem_name) ? p.mem_name : (p?.mem_name ? [p.mem_name] : [])
+      );
     })
     .finally(() => setLoading(false));
   }
@@ -224,33 +242,34 @@ const handleSubmit = async () => {
   try {
     const payload = {
   project_id: project.project_id,
-  project_name: project.project_name,
+  project_name: projectName,
   profes_id: project.profes_id,
-  samester: project.samester,
-  project_desc: project.project_desc,
+  samester: samester,
+  project_desc: projectDesc,
   project_stdate: startDate
-    ? startDate.toISOString().split("T")[0]  // 문자열로 변환
+    ? startDate.toISOString().split("T")[0]
     : project.project_stdate,
   project_endate: endDate
-    ? endDate.toISOString().split("T")[0]    // 문자열로 변환
+    ? endDate.toISOString().split("T")[0]
     : project.project_endate,
   team_id: project.team_id,
-  team_member_ids: project.mem_id || "",   // 문자열 그대로
-  team_member_names: Array.isArray(project.mem_name)
-    ? project.mem_name.join(", ")          // 문자열로 변환
-    : project.mem_name || "",
+  team_member_ids: project.mem_id || "",
+  team_member_names:
+    selectedTeamMember?.length > 0
+      ? selectedTeamMember.map((m) => m.mem_name).join(", ")
+      : memberNames.join(", "),
   team_leader: project.team_leader,
-  leader_name: project.leader_name,
+  leader_name: selectedTeamLeader?.mem_name ?? leaderName,
   edit_content: reason,
 };
     await requestProjectModify(payload);
-    alert("✅ 수정 요청이 등록되었습니다.");
+    alert("수정 요청이 등록되었습니다.");
     if (typeof window.refreshProjectTeamList === "function") {
       window.refreshProjectTeamList();
     }
     hideModal();
   } catch (err) {
-    console.error("❌ 수정 요청 실패:", err);
+    console.error("수정 요청 실패:", err);
     alert("수정 요청에 실패했습니다.");
   }
 };
@@ -274,7 +293,8 @@ const handleSubmit = async () => {
         <TopContent>
           <Row>
             <Label>프로젝트명</Label> 
-            <Input defaultValue={project?.project_name || ""} />
+            <Input value={projectName}
+    onChange={(e) => setProjectName(e.target.value)} />
           </Row>
           <FlexDiv style={{marginBottom:'-5px'}}>
             <Label>시작일</Label>
@@ -303,12 +323,17 @@ const handleSubmit = async () => {
             <Label>학기</Label>
             <RadioWrap>
               <RadioLabel>
-                <RadioButton name="term" defaultChecked />
+                <RadioButton  name="term"
+        checked={samester === "1학기"}
+        onChange={() => setSamester("1학기")}
+      />
                 <RadioMark />
                 <span>1학기</span>
               </RadioLabel>
               <RadioLabel>
-                <RadioButton name="term" />
+                <RadioButton  name="term"
+        checked={samester === "2학기"}
+        onChange={() => setSamester("2학기")} />
                 <RadioMark />
                 <span>2학기</span>
               </RadioLabel>
@@ -317,24 +342,38 @@ const handleSubmit = async () => {
 
           <Row>
             <Label>담당교수</Label>
-            <Input defaultValue={project?.profes_name || ""} />
+            <Input defaultValue={project?.profes_name || ""} readOnly/>
           </Row>
 
           <Row>
             <Label>팀장</Label>
-            <Input defaultValue={project?.leader_name || ""} />
-            <SearchBtn aria-label="팀장 검색" />
+            <Input  value={
+      selectedTeamLeader?.mem_name ?? project?.leader_name ?? ""
+    }  readOnly/>
+            <SearchBtn aria-label="팀장 검색" onClick={openTeamLeaderModal} />
           </Row>
 
           <Row>
             <Label>팀원</Label>
-            <Input defaultValue={(project?.mem_name || []).join(", ")} />
-            <SearchBtn aria-label="팀원 검색" />
+             <Input
+    value={
+      selectedTeamMember?.length > 0
+        ? selectedTeamMember.map((m) => m.mem_name).join(", ")
+        : memberNames.join(", ")
+    }
+    readOnly
+  />
+            <SearchBtn aria-label="팀원 검색" onClick={openTeamMemberModal}/>
           </Row>
 
           <SectionLabel>내용</SectionLabel>
           <Divider />
-          <PlainText>{project?.project_desc || ""}</PlainText>
+          <textarea 
+  value={stripHtmlTags(projectDesc)}
+  onChange={(e) => setProjectDesc(e.target.value)}
+  style={{ width: "100%", height: "100px", fontSize:'14px'}}
+  readOnly
+/>
         </TopContent>
       </TopSection>
 

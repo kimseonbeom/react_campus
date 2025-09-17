@@ -26,6 +26,9 @@ export const modifyProjectTeamCheck = (payload) => {
   return axios.post("/api/project/modify/pro", payload);
   
 };
+export const removeTeam = (team_id) => {
+  return axios.get("/api/project/remove", { params: { team_id } });
+};
 export const getProjectTeamListPro = (memId, page = 1, samester = '', projectName = '',projectStDate = '',  projectEnDate = '', perPageNum = 3 ) => {
   
   return axios.get('/api/project/list/pro', {

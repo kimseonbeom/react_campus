@@ -59,7 +59,7 @@ const handleSearchChange = (e) => {
                        <RegistButton style={{ width: '48px', height: '26px', marginTop: '5px' }} onClick={handleConfirm}>확인</RegistButton>
                     </Container>
                     <FlexDiv style={{marginLeft:'10px', marginBottom:'10px'}}>
-                        <CatTitle>교수 검색</CatTitle>
+                        <CatTitle>학생 검색</CatTitle>
                     </FlexDiv>
                     <Hr style={{width:'281px', margin:'0 auto'}}/>
                     <Flex style={{margin:'13px 4px 16px 4px'}}>

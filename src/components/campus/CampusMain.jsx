@@ -84,13 +84,14 @@ import BoardList from './board/BoardList'
 import BoardModify from './board/BoardModify'
 import BoardRegist from './board/BoardRegist'
 import styled from 'styled-components'
-import { useAuthStore } from './commons/modalStore'
+import { useAuthStore, useToastStore } from './commons/modalStore'
 import Loading from './commons/Loading'
 import Login from './commons/Login'
 import { RedirectAfterLogin } from './home/RedirectAfterLogin'
 import TeamSearch from './proTeam/TeamSearch'
 import TeamMemberSearch from './proTeam/TeamMemberSearch'
 import ProfessorSearch from './proTeam/ProfessorSearch'
+import Toast from './commons/Toast'
 
 function CampusMain() {
   const isLoggedIn = useAuthStore(state => state.isLoggedIn)
@@ -98,6 +99,7 @@ function CampusMain() {
   const logout = useAuthStore(state => state.logout);
   const [checkingSession, setCheckingSession] = useState(true);
   const user = useAuthStore(state => state.user);
+    const { message, hideToast } = useToastStore();
   useEffect(() => {
     // 세션 스토리지에 로그인 정보가 있으면 로그인 처리
     const userData = sessionStorage.getItem('user');
@@ -113,7 +115,8 @@ function CampusMain() {
 
   const Container = styled.div`
     width: 100vw;
-  `
+  ` 
+
   return (
     <>
     <BrowserRouter>
@@ -151,7 +154,6 @@ function CampusMain() {
         <Route path='/project/team' element={<ProjectTeamWrapper />}>
           <Route  index element={user.mem_auth === "ROLE01" ? <ProjectTeamList /> : <ProjectTeamListPro />} 
   />
-          <Route path=':team_id' element={<ProjectTeamDetail />}></Route>
         </Route>
         <Route path='/project/object' element={<ProjectObjectWrapper />}>
           <Route index element={<ProjectObjectProjectList />}></Route>
@@ -173,10 +175,12 @@ function CampusMain() {
       <ChangePasswordModal/>
       <ProjectTeamModify/>
       <ProjectTeamRegist/>
+      <ProjectTeamDetail/>
       <TeamSearch/>
       <TeamMemberSearch />
       <ProfessorSearch/>
       <ProjectTeamModifyCheck/>
+      {message && <Toast message={message} onClose={hideToast} />}
       </>
       )}
       

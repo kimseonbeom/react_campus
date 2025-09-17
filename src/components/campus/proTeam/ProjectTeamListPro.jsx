@@ -14,7 +14,7 @@ import { ContentText, OverviewText } from '../proObject/ProjectObjectProjectList
 import { Flex } from '../home/HomeWrapperPro';
 import { getProjectTeamListPro, getUserSession } from '../api';
 import { useLocation } from 'react-router-dom';
-import useModalStore, { useProjectTeamModifyCheckModalStore, useProjectTeamModifyModalStore, useProjectTeamRegistModalStore } from '../commons/modalStore';
+import useModalStore, { useProjectDetailModalStore, useProjectTeamModifyCheckModalStore, useProjectTeamModifyModalStore, useProjectTeamRegistModalStore } from '../commons/modalStore';
 import { ProjectNameText } from './ProjectTeamList';
 
 const LengthLine = styled.div`
@@ -78,6 +78,7 @@ function ProjectTeamListPro() {
   const user = getUserSession();
   const [projectEditStatusMap, setEditStatusMap] = useState({});
   const { showModal } = useProjectTeamModifyModalStore();
+   const { showModal: showDetailModal } = useProjectDetailModalStore();
   const [pageMaker, setPageMaker] = useState({
     page: 1,
     perPageNum: 3,
@@ -209,7 +210,7 @@ const handleSearch = () => {
                                 <label style={{display: "flex", justifyContent:'start', marginLeft:'14px'}}>
                                     <CheckBox type='checkbox' checked={checked} onChange={(e) => setChecked(e.target.checked)}/>
                                     <CheckMark/>
-                                    <CheckText>수정요청 (1)</CheckText>
+                                    <CheckText>수정요청</CheckText>
                                 </label>
                             </CheckContainer>
                             {data?.length > 0 ? (
@@ -222,7 +223,9 @@ const handleSearch = () => {
             console.log("editStatus:", editStatus, "project_id:", project.project_id);
             
             return (
-                <ContentBox style={{width:'386px', height: editStatus === '요청중' ? '160px' : '124px', margin:'0 auto', border:'1px solid #aaa', marginBottom:'10px',marginTop:'13px'}}>
+                <ContentBox 
+                onClick={() => showDetailModal(project.project_id)}
+                style={{width:'386px', height: editStatus === '요청중' ? '160px' : '124px', margin:'0 auto', border:'1px solid #aaa', marginBottom:'10px',marginTop:'13px'}}>
                     <Header style={{paddingTop:'20px', paddingBottom:'11px', height:'37px', alignItems:'center'}}>
                         <HeadText style={{fontSize:'14px'}}>
                             {project.samester}
@@ -275,7 +278,9 @@ const handleSearch = () => {
                     {editStatus === '요청중' ? (
                     <div style={{width:'100%', display:'flex', justifyContent:'center', marginTop:'15px'}}>
                         
-                    <GreenBtn onClick={() => showModifyModal(project.project_id)}>
+                    <GreenBtn onClick={(e) => {
+    e.stopPropagation(); // 카드 클릭 이벤트 전파 방지
+    showModifyModal(project.project_id);}}>
                         수정 요청
                     </GreenBtn>
                         
@@ -322,7 +327,6 @@ const handleSearch = () => {
                    </PageNumberButton>
                  );
                })}
-                             
                              <PageArrowButton disabled={!pageMaker.next} onClick={() => handlePageChange(pageMaker.endPage + 1)}>
                                <PageText>
                                  <img src={pageArrow3} style={{ width: "6px", height: "10px", marginLeft: '10px' }} alt="next-block" />

@@ -12,7 +12,7 @@ import { calender, dropdownArrow, searchIcon, pageArrow1, pageArrow2, pageArrow3
 import { Hr } from '../menu/SideMenu';
 import { ContentText, OverviewText } from '../proObject/ProjectObjectProjectList';
 import { Flex } from '../home/HomeWrapperPro';
-import useModalStore, { useProjectTeamModifyModalStore, useProjectTeamRegistModalStore } from '../commons/modalStore';
+import useModalStore, { useProjectDetailModalStore, useProjectTeamModifyModalStore, useProjectTeamRegistModalStore } from '../commons/modalStore';
 import Toast from '../commons/Toast';
 import { useLocation } from 'react-router-dom';
 import { getProjectTeamList, getUserSession } from '../api';
@@ -90,6 +90,7 @@ function ProjectTeamList() {
   const [projectEditStatusMap, setEditStatusMap] = useState({});
   const { showModal: showModifyModal } = useProjectTeamModifyModalStore();
   const { showModal: showRegistModal } = useProjectTeamRegistModalStore();
+  const { showModal: showDetailModal } = useProjectDetailModalStore();
   const [pageMaker, setPageMaker] = useState({
     page: 1,
     perPageNum: 3,
@@ -148,7 +149,10 @@ function ProjectTeamList() {
       setToastMsg("팀이 등록되었습니다!");
     });
   }
-
+window.showToast = (message) => {
+  // state 기반으로 토스트 띄움
+  setToastMsg(message);
+};
 const formatDate = (dateValue) => dateValue ? new Date(dateValue).toLocaleDateString("sv-SE") : "";
 
   const handlePageChange = (newPage) => {
@@ -224,7 +228,9 @@ const handleSearch = () => {
             const isPastEndDate = new Date(project.project_endate) < new Date();
             const editStatus = projectEditStatusMap[project.project_id]?.[0];
             return (
-              <ContentBox key={project.project_id} style={{ width: '386px', height: '160px', margin: '0 auto', border: '1px solid #ccc', marginBottom: '10px', marginTop: '13px' }}>
+              <ContentBox key={project.project_id} 
+              onClick={() => showDetailModal(project.project_id)}
+              style={{ width: '386px', height: '160px', margin: '0 auto', border: '1px solid #ccc', marginBottom: '10px', marginTop: '13px' }}>
                 <Header style={{ paddingTop: '20px', paddingBottom: '11px', height: '37px', alignItems: 'center' }}>
                   <HeadText style={{ fontSize: '14px' }}>{project.samester}</HeadText>
                   <OverviewText style={{ marginLeft: '17px', marginBottom: '4px' }}>
@@ -258,7 +264,10 @@ const handleSearch = () => {
                   {isPastEndDate ? (
                     <ObjectBtn>결과물</ObjectBtn>
                   ) : (
-                    editStatus === '요청중' ? <ModifyingBtn>요청중</ModifyingBtn> : <GreenBtn onClick={() => showModifyModal(project.project_id)}>수정 요청</GreenBtn>
+                    editStatus === '요청중' ? <ModifyingBtn>요청중</ModifyingBtn> : <GreenBtn onClick={(e) => {
+    e.stopPropagation();
+    showModifyModal(project.project_id);
+  }}>수정 요청</GreenBtn>
                   )}
                 </div>
               </ContentBox>
@@ -316,8 +325,8 @@ const handleSearch = () => {
           </nav>
         )}
 
-      </div>
       {toastMsg && <Toast message={toastMsg} onClose={() => setToastMsg("")} />}
+      </div>
     </>
   )
 }

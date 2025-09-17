@@ -1,7 +1,12 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { Container } from "../topNav/TopNav";
 import { Cancle } from "../img";
+import { Overlay } from "../proObject/ProjectObjectFeedback";
+import { useProjectDetailModalStore, useToastStore } from "../commons/modalStore";
+import { ExitButton } from "../lecAtten/AttandanceModal";
+import { getProjectDetail, removeTeam } from "../api";
+import Toast from "../commons/Toast";
 
 const MobileShell = styled.div`
   width: 100vw;
@@ -117,67 +122,94 @@ const Button = styled.button`
   margin-right: 10px;
 `;
 
-export default function ProjectTeamDetail({
-  onClose,
-  onDelete,
-  data = {
-    semester: "2학기",
-    title: "클라우드 기반 협업 플랫폼",
-    period: "2025-08-26 ~ 2025-08-26",
-    professor: "서형원",
-    leader: "김원희",
-    members: "권오규, 김민주, 김선범",
-    content: "내용입니다.",
-  },
-}) {
-  const handleClose = () => (onClose ? onClose() : window.history.back());
-  const handleDelete = () => {
-    if (window.confirm("이 프로젝트를 삭제할까요?")) {
-      onDelete ? onDelete(data) : alert("삭제되었습니다.");
-    }
-  };
+export default function ProjectTeamDetail() {
+ 
+  const { visible, hideModal, project_id } = useProjectDetailModalStore();
+  const [detail, setDetail] = useState(null);
+  const { showToast } = useToastStore();
+  useEffect(() => {
+  if (!project_id) return;
 
+  getProjectDetail(project_id)
+    .then(res => {
+      const project = res.data.projectList.find(p => p.project_id === project_id);
+
+      setDetail({
+        ...project,
+        team_members: project.mem_name || []
+      });
+    })
+    .catch(err => console.error(err));
+}, [project_id]);
+const formatDate = (timestamp) => {
+  if (!timestamp) return "";
+  const date = new Date(timestamp);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0"); // 월은 0부터 시작
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+  if (!visible) return null;
+  if (!detail) return null;
   return (
+    <Overlay>
       <MobileShell>
         <Container style={{backgroundColor:'#fff',display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-            <img src={Cancle} style={{width:'19px', height:'19px', cursor:'pointer'}} onClick={handleClose}></img>
+          <ExitButton style={{width:'19px', height:'19px', margin:'0'}} onClick={hideModal}>
+            <img src={Cancle} style={{ width: '19px', height: '19px' }} />
+          </ExitButton>
         </Container>
 
         <div style={{padding: '12px 20px 24px'}}>
-        <TitleHeader>
-          <Semester>{data.semester}</Semester>
-          <HeaderTitle>{data.title}</HeaderTitle>
-        </TitleHeader>
+          <TitleHeader>
+            <Semester>{detail.samester}</Semester>
+            <HeaderTitle>{detail.project_name}</HeaderTitle>
+          </TitleHeader>
 
-        <PageDivider />
+          <PageDivider />
 
-        <Card>
-          <Grid>
-            <Label>기간</Label>
-            <Value>{data.period}</Value>
+          <Card>
+            <Grid>
+              <Label>기간</Label>
+             <Value>{formatDate(detail.project_stdate)} ~ {formatDate(detail.project_endate)}</Value>
 
-            <Label>담당교수</Label>
-            <Value>{data.professor}</Value>
+              <Label>담당교수</Label>
+              <Value>{detail.profes_name}</Value>
 
-            <Label>팀장</Label>
-            <Value>{data.leader}</Value>
+              <Label>팀장</Label>
+              <Value>{detail.leader_name}</Value>
 
-            <Label>팀원</Label>
-            <Value>{data.members}</Value>
+              <Label>팀원</Label>
+              <Value>{detail.team_members?.join(", ")}</Value>
 
-            <Label>내용</Label>
-            <Value>
-              <Body style={{ minHeight: "100px" }}>{data.content}</Body>
-            </Value>
-          </Grid>
+              <Label>내용</Label>
+              <Value>
+                <Body style={{ minHeight: "100px" }}>{detail.project_desc}</Body>
+              </Value>
+            </Grid>
 
-          <SoftDivider />
+            <SoftDivider />
 
-          <Footer>
-            <Button onClick={handleDelete}>삭제</Button>
-          </Footer>
-        </Card>
+            <Footer>
+              <Button
+  onClick={() => {
+    removeTeam(detail.team_id)
+      .then(() => {
+        showToast("팀이 삭제되었습니다."); // 여기서 상태 기반 호출
+        hideModal();
+        if (typeof window.refreshProjectTeamList === "function") {
+          window.refreshProjectTeamList();
+        }
+      })
+      .catch(err => console.error(err));
+  }}
+>
+                삭제
+              </Button>
+            </Footer>
+          </Card>
         </div>
       </MobileShell>
+    </Overlay>
   );
 }
