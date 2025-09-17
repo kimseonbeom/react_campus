@@ -154,30 +154,38 @@ export default function ProjectTeamModifyCheck() {
   };
 
  const handleApprove = async () => {
-  if (!projectData) return;
+  if (!projectData || !edit) return;
   setLoading(true);
 
   try {
-    // team_member_ids를 무조건 배열로 변환
-    const teamMemberIds = Array.isArray(edit?.team_member_ids)
-      ? edit.team_member_ids
-      : [edit.team_member_ids];
+    // team_member_ids 문자열 → 배열 처리
+    const teamMemberIds = edit.team_member_ids.split(',').map(id => id.trim());
 
-    const payload = {
-      project: projectData,
-      team: projectData.team,
-      team_member_ids: teamMemberIds,
-      before_id: edit?.before_id,
-    };
+// 문자열로 합치지 말고 개별 ID 그대로 배열 유지
+const payload = {
+  project: {
+    ...projectData,
+    ...edit,
+    team_id: edit.team_id || projectData.team_id,
+  },
+  team: {
+    ...projectData.team,
+    ...(edit.team || {}),
+    team_id: edit.team_id || projectData.team?.team_id,
+    team_leader: edit.team_leader || projectData.team_leader,
+  },
+  team_member_ids: teamMemberIds, // 배열 그대로
+  before_id: edit.before_id,
+};
 
-    console.log("승인 요청 payload:", payload); // 콘솔 찍어서 확인
+    console.log("승인 요청 payload:", payload);
+
     const res = await modifyProjectTeamCheck(payload);
-
     if (res.data.status === "success") {
       alert("프로젝트 수정 승인 완료");
       if (typeof window.refreshProjectTeamList === "function") {
-      window.refreshProjectTeamList();
-    }
+        window.refreshProjectTeamList();
+      }
       hideModal();
     }
   } catch (err) {
@@ -187,6 +195,9 @@ export default function ProjectTeamModifyCheck() {
     setLoading(false);
   }
 };
+
+
+
 
 
   const handleReject = async () => {

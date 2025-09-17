@@ -59,7 +59,46 @@ export const getProjectTeamList = (memId, page = 1, samester = '', projectName =
 export function checkSession() {
   return axios.get('/api/login/check');
 }
-
+export const getProjectTeamListStu = (
+  memId, 
+  page = 1, 
+  samester = '', 
+  projectName = '', 
+  projectStDate = '', 
+  projectEnDate = ''
+) => {
+  return axios.get('/api/roadmap/projectlist/stu', {  // @RestController 경로
+    params: {
+      memId,
+      page,
+      samester,
+      project_name: projectName || '',
+      project_stdate: projectStDate || '',
+      project_endate: projectEnDate || ''
+    }
+  });
+};
+export const getProjectTeamListProRest = (
+  memId,
+  page = 1,
+  samester = '',
+  projectName = '',
+  projectStDate = '',
+  projectEnDate = '',
+  modifyRequest = false
+) => {
+  return axios.get('/api/roadmap/projectlist/pro', {
+    params: {
+      memId, // session에서 서버가 받아야 하지만, axios에서는 보내도 무방
+      page,
+      samester,
+      project_name: projectName || '',
+      project_stdate: projectStDate || '',
+      project_endate: projectEnDate || '',
+      modifyRequest
+    }
+  });
+};
 // 로그아웃
 export function logoutUser() {
   return axios.post('/api/login/logout', {});
@@ -85,4 +124,6 @@ export const getUserSession = () => {
     console.error("세션에서 사용자 정보를 가져오는데 실패:", err);
     return { name: "", id: "", pictureUrl: "/img/user1.png" };
   }
+
+  
 };

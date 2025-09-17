@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -9,8 +9,10 @@ import { Button, CatTitle, CheckBox, CheckContainer, CheckMark, CheckText, Custo
 } from '../commons/WHComponent';
 import { Hr } from '../menu/SideMenu';
 import { dropdownArrow, searchIcon, pageArrow1, pageArrow2, pageArrow3, pageArrow4,
-        calender, 
+        calender,
+        user1, 
 } from '../img';
+import { getProjectTeamList, getProjectTeamListProRest, getProjectTeamListStu, getUserSession } from '../api';
 
 export const GreenBox = styled.div`
   width: 63px;
@@ -53,14 +55,48 @@ function ProjectObjectProjectList() {
     const startInputRef = useRef(null);
     const endInputRef = useRef(null);
     const [checked, setChecked] = useState(false);
-
+    const [projectList, setProjectList] = useState([]);
     const toggleOpen = () => setOpen(!open);
+    const user = getUserSession();
+    useEffect(() => {
+  const memId = user.mem_id;
+  const auth = user.mem_auth;
+  console.log('Fetching project list for:', memId, 'auth:', auth);
 
+  if (auth === 'ROLE01') {
+    // 학생
+    getProjectTeamList(memId)
+      .then(res => {
+        console.log('학생용 API response:', res.data);
+        setProjectList(res.data.projectList || []);
+      })
+      .catch(err => console.error(err));
+  } else if (auth === 'ROLE02') {
+    // 교수
+    getProjectTeamListProRest(memId)
+      .then(res => {
+        console.log('교수용 API response:', res.data);
+        setProjectList(res.data.projectList || []);
+      })
+      .catch(err => console.error(err));
+  } else {
+    console.warn('알 수 없는 권한:', auth);
+    setProjectList([]);
+  }
+}, []);
     // 옵션 선택
     const handleSelect = (value) => {
         setSelected(value);
         setOpen(false);
   };
+const formatDate = (timestamp) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0'); // 월은 0부터 시작
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
   return (
      <>
             <div style={{width:"100%", minHeight:"731px", backgroundColor:"#f7f7f7"}}>
@@ -113,129 +149,42 @@ function ProjectObjectProjectList() {
                     <CheckText>미완료 (1)</CheckText>
                 </label>
             </CheckContainer>
-            <ContentBox style={{width:'386px', height:'140px', margin:'0 auto', border:'1px solid #ccc', marginBottom:'10px'}}>
-                        <Header style={{paddingTop:'4px', paddingBottom:'11px', height:'37px'}}>
-                          <HeadText style={{fontSize:'14px'}}>
-                            Camp_us
-                          </HeadText>
-                          <GreenBox style={{marginLeft:'auto',marginTop:'5px'}}>
-                            평가완료
-                          </GreenBox>
-                        </Header>
-                        <Hr style={{margin:'0 auto', width:'366px'}}/>
-                        <FlexDiv style={{marginLeft:'27px', marginTop:'12px'}}>
-                          <ContentText>
-                            학기
-                          </ContentText>
-                          <div style={{marginLeft:'14px'}}>
-                          <OverviewText>
-                            2학기
-                          </OverviewText>
-                          </div>
-                        </FlexDiv>
-                        <FlexDiv style={{marginLeft:'27px', marginTop:'12px'}}>
-                          <ContentText>
-                            기간
-                          </ContentText>
-                          <div style={{marginLeft:'14px'}}>
-                          <OverviewText>
-                            2025-09-02 ~ 2025-09-22
-                          </OverviewText>
-                          </div>
-                        </FlexDiv>
-                        <FlexDiv style={{marginLeft:'27px', marginTop:'12px'}}>
-                          <ContentText>
-                            팀장
-                          </ContentText>
-                          <div style={{marginLeft:'14px'}}>
-                          <OverviewText>
-                            김원희
-                          </OverviewText>
-                          </div>
-                        </FlexDiv>
-            </ContentBox>
-            <ContentBox style={{width:'386px', height:'140px', margin:'0 auto', border:'1px solid #ccc',marginBottom:'10px'}}>
-                        <Header style={{paddingTop:'4px', paddingBottom:'11px', height:'37px'}}>
-                          <HeadText style={{fontSize:'14px'}}>
-                            Camp_us
-                          </HeadText>
-                          <GreenBox style={{marginLeft:'auto',marginTop:'5px',border:'1px solid #ff5e5e',color:'#ff5e5e'}}>
-                            미평가
-                          </GreenBox>
-                        </Header>
-                        <Hr style={{margin:'0 auto', width:'366px'}}/>
-                        <FlexDiv style={{marginLeft:'27px', marginTop:'12px'}}>
-                          <ContentText>
-                            학기
-                          </ContentText>
-                          <div style={{marginLeft:'14px'}}>
-                          <OverviewText>
-                            2학기
-                          </OverviewText>
-                          </div>
-                        </FlexDiv>
-                        <FlexDiv style={{marginLeft:'27px', marginTop:'12px'}}>
-                          <ContentText>
-                            기간
-                          </ContentText>
-                          <div style={{marginLeft:'14px'}}>
-                          <OverviewText>
-                            2025-09-02 ~ 2025-09-22
-                          </OverviewText>
-                          </div>
-                        </FlexDiv>
-                        <FlexDiv style={{marginLeft:'27px', marginTop:'12px'}}>
-                          <ContentText>
-                            팀장
-                          </ContentText>
-                          <div style={{marginLeft:'14px'}}>
-                          <OverviewText>
-                            김원희
-                          </OverviewText>
-                          </div>
-                        </FlexDiv>
-            </ContentBox>
-            <ContentBox style={{width:'386px', height:'140px', margin:'0 auto', border:'1px solid #ccc',marginBottom:'10px'}}>
-                        <Header style={{paddingTop:'4px', paddingBottom:'11px', height:'37px'}}>
-                          <HeadText style={{fontSize:'14px'}}>
-                            Camp_us
-                          </HeadText>
-                          <GreenBox style={{marginLeft:'auto',marginTop:'5px',border:'1px solid #aaa',color:'#aaa'}}>
-                            평가완료
-                          </GreenBox>
-                        </Header>
-                        <Hr style={{margin:'0 auto', width:'366px'}}/>
-                        <FlexDiv style={{marginLeft:'27px', marginTop:'12px'}}>
-                          <ContentText>
-                            학기
-                          </ContentText>
-                          <div style={{marginLeft:'14px'}}>
-                          <OverviewText>
-                            2학기
-                          </OverviewText>
-                          </div>
-                        </FlexDiv>
-                        <FlexDiv style={{marginLeft:'27px', marginTop:'12px'}}>
-                          <ContentText>
-                            기간
-                          </ContentText>
-                          <div style={{marginLeft:'14px'}}>
-                          <OverviewText>
-                            2025-09-02 ~ 2025-09-22
-                          </OverviewText>
-                          </div>
-                        </FlexDiv>
-                        <FlexDiv style={{marginLeft:'27px', marginTop:'12px'}}>
-                          <ContentText>
-                            팀장
-                          </ContentText>
-                          <div style={{marginLeft:'14px'}}>
-                          <OverviewText>
-                            김원희
-                          </OverviewText>
-                          </div>
-                        </FlexDiv>
-            </ContentBox>
+            {projectList.map((project, idx) => (
+  <ContentBox key={project.project_id} style={{width:'386px', height:'140px', margin:'0 auto', border:'1px solid #ccc',marginBottom:'10px'}}>
+      <Header style={{paddingTop:'4px', paddingBottom:'11px', height:'37px'}}>
+        <HeadText style={{fontSize:'14px'}}>{project.project_name}</HeadText>
+        <GreenBox style={{
+          marginLeft:'auto',
+          marginTop:'5px',
+          border: project.eval_status === '미평가' ? '1px solid #ff5e5e' : '1px solid #2ec4b6',
+          color: project.eval_status === '미평가' ? '#ff5e5e' : '#2ec4b6'
+        }}>
+          {project.eval_status}
+        </GreenBox>
+      </Header>
+      <Hr style={{margin:'0 auto', width:'366px'}}/>
+      <FlexDiv style={{marginLeft:'27px', marginTop:'12px'}}>
+        <ContentText>학기</ContentText>
+        <div style={{marginLeft:'14px'}}>
+          <OverviewText>{project.samester}</OverviewText>
+        </div>
+      </FlexDiv>
+      <FlexDiv style={{marginLeft:'27px', marginTop:'12px'}}>
+        <ContentText>기간</ContentText>
+        <div style={{marginLeft:'14px'}}>
+          <OverviewText>
+  {formatDate(project.project_stdate)} ~ {formatDate(project.project_endate)}
+</OverviewText>
+        </div>
+      </FlexDiv>
+      <FlexDiv style={{marginLeft:'27px', marginTop:'12px'}}>
+        <ContentText>팀장</ContentText>
+        <div style={{marginLeft:'14px'}}>
+          <OverviewText>{project.leader_name}</OverviewText>
+        </div>
+      </FlexDiv>
+  </ContentBox>
+))}
             <nav>
                 <PageNation>
                     <PageArrowButton>

@@ -214,6 +214,7 @@ const [samester, setSamester] = useState(""); // 학기
 const [projectDesc, setProjectDesc] = useState("");
 const [leaderName, setLeaderName] = useState("");
 const [memberNames, setMemberNames] = useState([]);
+const [memberIds, seMemberIds] = useState([]);
 
 useEffect(() => {
   if (visible && project_id) {
@@ -232,6 +233,9 @@ useEffect(() => {
       setMemberNames(
         Array.isArray(p?.mem_name) ? p.mem_name : (p?.mem_name ? [p.mem_name] : [])
       );
+      setMemberIds(
+        Array.isArray(p?.mem_id) ? p.mem_id : (p?.mem_id ? [p.mem_id] : [])
+      )
     })
     .finally(() => setLoading(false));
   }
@@ -253,7 +257,9 @@ const handleSubmit = async () => {
     ? endDate.toISOString().split("T")[0]
     : project.project_endate,
   team_id: project.team_id,
-  team_member_ids: project.mem_id || "",
+ team_member_ids: selectedTeamMember?.length > 0
+  ? selectedTeamMember.map(m => m.mem_id).join(",")
+  : memberIds.join(","),
   team_member_names:
     selectedTeamMember?.length > 0
       ? selectedTeamMember.map((m) => m.mem_name).join(", ")
