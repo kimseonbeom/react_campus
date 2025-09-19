@@ -19,7 +19,7 @@ const Breadcrumb = styled.div`
   }
   margin-left: 10px;
 `;
-const DividerBrand = styled.div`
+export const DividerBrand = styled.div`
   height: 2px;
   background: #2ec4b6;
   opacity: 0.6;
@@ -114,20 +114,20 @@ const Btn = styled.button`
   cursor: pointer;
 `;
 
-const SectionHead = styled.div`
+export const SectionHead = styled.div`
   display: flex;
   align-items: center;
   margin: 20px 0 10px;
 `;
-const SectionTitle = styled.div`
+export const SectionTitle = styled.div`
   font-weight: 700;
   color: #707070;
   margin-left: 10px;
 `;
-const SectionAction = styled.div`
+export const SectionAction = styled.div`
   margin-left: auto;
 `;
-const ModifyBtn = styled.button`
+export const ModifyBtn = styled.button`
   width: 50px;
   height: 26px;
   padding: 0 12px;
@@ -140,11 +140,11 @@ const ModifyBtn = styled.button`
   margin-right: 5px;
 `;
 
-const FbHeader = styled.div`
+export const FbHeader = styled.div`
   display: flex;
   align-items: center;
 `;
-const Avatar = styled.div`
+export const Avatar = styled.div`
   width: 34px;
   height: 34px;
   border-radius: 50%;
@@ -152,22 +152,22 @@ const Avatar = styled.div`
   margin-right: 10px;
   margin-left: 10px;
 `;
-const FbMeta = styled.div`
+export const FbMeta = styled.div`
   flex: 1;
   min-width: 0;
 `;
-const FbTop = styled.div`
+export const FbTop = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 `;
-const FbName = styled.span`
+export const FbName = styled.span`
   font-weight: 700;
   color: #333;
   font-size: 13px;
 `;
-const FbScore = styled.span`
+export const FbScore = styled.span`
   font-size: 12px;
   color: #98a1a8;
 `;
@@ -176,12 +176,12 @@ const FbTime = styled.span`
   font-size: 12px;
   color: #98a1a8;
 `;
-const FbBodyWrap = styled.div`
+export const FbBodyWrap = styled.div`
   padding-top: 10px;
   border-top: 1px solid #d0d0d0;
   margin-top: 13px;
 `;
-const FbBody = styled.div`
+export const FbBody = styled.div`
   font-size: 13px;
   color: #6b7680;
   line-height: 1.7;
@@ -190,7 +190,7 @@ const FbBody = styled.div`
   margin-right: 10px;
 `;
 
-const Line = styled.div`
+export const Line = styled.div`
   width: 372px;
   height: 12px;
   color: #444444;
@@ -203,6 +203,7 @@ const Meta = styled.div`
 `;
 
 export default function ProjectObjectDetailFeedback() {
+  
   return (
       <MobileShell>
         <div style={{backgroundColor:'#fff',marginBottom:'12px' ,padding:'10px 20px 24px'}}>

@@ -270,10 +270,10 @@ const handleSubmit = async () => {
 };
     await requestProjectModify(payload);
     alert("수정 요청이 등록되었습니다.");
+    hideModal();
     if (typeof window.refreshProjectTeamList === "function") {
       window.refreshProjectTeamList();
     }
-    hideModal();
   } catch (err) {
     console.error("수정 요청 실패:", err);
     alert("수정 요청에 실패했습니다.");

@@ -92,6 +92,8 @@ import TeamSearch from './proTeam/TeamSearch'
 import TeamMemberSearch from './proTeam/TeamMemberSearch'
 import ProfessorSearch from './proTeam/ProfessorSearch'
 import Toast from './commons/Toast'
+import ProjectObjectDetail from './proObject/ProjectObjectDetail'
+import ProjectObjectFeedbackModify from './proObject/ProjectObjectFeedbackModify'
 
 function CampusMain() {
   const isLoggedIn = useAuthStore(state => state.isLoggedIn)
@@ -99,6 +101,7 @@ function CampusMain() {
   const logout = useAuthStore(state => state.logout);
   const [checkingSession, setCheckingSession] = useState(true);
   const user = useAuthStore(state => state.user);
+  
     const { message, hideToast } = useToastStore();
   useEffect(() => {
     // 세션 스토리지에 로그인 정보가 있으면 로그인 처리
@@ -157,9 +160,9 @@ function CampusMain() {
         </Route>
         <Route path='/project/object' element={<ProjectObjectWrapper />}>
           <Route index element={<ProjectObjectProjectList />}></Route>
-          <Route path=':project_id/list' element={<ProjectObjectList />}>
-            <Route path=':rm_id' element={<ProjectObjectDetailFeedback />}></Route>
-          </Route>
+          <Route path=':project_id/list' element={<ProjectObjectList />}></Route>
+            <Route path=':project_id/list/:rm_id/detail' element={<ProjectObjectDetail/>}></Route> 
+          
         </Route>
         <Route path='/board' element={<BoardWrapper />}>
           <Route index element={<BoardList />}></Route>
@@ -168,10 +171,6 @@ function CampusMain() {
       </Routes>
 
       { user.mem_auth.includes("ROLE01") ? <Mypage /> : <MypagePro />}
-      <MailDashBoard/>
-      <LecturePlanModify/>
-      <LecturePlanRegist/>
-      <LecturePlanRegist/>
       <ChangePasswordModal/>
       <ProjectTeamModify/>
       <ProjectTeamRegist/>
@@ -180,6 +179,8 @@ function CampusMain() {
       <TeamMemberSearch />
       <ProfessorSearch/>
       <ProjectTeamModifyCheck/>
+      <ProjectObjectFeedback/>
+      <ProjectObjectFeedbackModify/>
       {message && <Toast message={message} onClose={hideToast} />}
       </>
       )}

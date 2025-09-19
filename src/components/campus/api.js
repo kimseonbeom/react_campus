@@ -65,7 +65,9 @@ export const getProjectTeamListStu = (
   samester = '', 
   projectName = '', 
   projectStDate = '', 
-  projectEnDate = ''
+  projectEnDate = '',
+  evalStatus,
+    perPageNum  = 3
 ) => {
   return axios.get('/api/roadmap/projectlist/stu', {  // @RestController 경로
     params: {
@@ -74,7 +76,22 @@ export const getProjectTeamListStu = (
       samester,
       project_name: projectName || '',
       project_stdate: projectStDate || '',
-      project_endate: projectEnDate || ''
+      project_endate: projectEnDate || '',
+      eval_status : evalStatus,
+      perPageNum
+    }
+  });
+};
+export const getProjectObjectList = (projectId, memId, rmCategory = '', rmName = '', rmStdate = '', rmEndate = '', page = 1) => {
+  return axios.get('/api/roadmap/list/stu', {
+    params: {
+      project_id: projectId,
+      memId: memId,
+      rm_category: rmCategory,
+      rm_name: rmName,
+      rm_stdate: rmStdate,
+      rm_endate: rmEndate,
+      page
     }
   });
 };
@@ -86,6 +103,7 @@ export const getProjectTeamListProRest = (
   projectStDate = '',
   projectEnDate = '',
   modifyRequest = false
+
 ) => {
   return axios.get('/api/roadmap/projectlist/pro', {
     params: {
@@ -98,6 +116,39 @@ export const getProjectTeamListProRest = (
       modifyRequest
     }
   });
+};
+export const getRoadMapDetail = async (rm_id, memId, pageMakers = {}, pageMaker = {}) => {
+  try {
+    const params = {
+      rm_id,
+      memId,
+      ...pageMakers,
+      ...pageMaker
+    };
+
+    const res = await axios.get("/api/roadmap/detail", { params });
+    return res.data;
+  } catch (err) {
+    console.error("로드맵 상세 조회 실패:", err.response?.data || err);
+    throw err;
+  }
+};
+export const getEvaluationForm = (rm_id) => {
+  return axios.get("/api/roadmap/evaluation/form", {
+    params: { rm_id }
+  })
+};
+export const registerEvaluation = (payload) => {
+  return axios.post(`/api/roadmap/evaluation/regist?memId=${payload.profes_id}`, payload)
+};
+export const getEvaluationForModify = (eval_id, rm_id) => {
+  return axios.get(`/api/roadmap/modify?eval_id=${eval_id}&rm_id=${rm_id}`);
+};
+export const modifyEvaluation = (payload) => {
+  return axios.post(
+    `/api/roadmap/modify?eval_id=${payload.eval_id}&rm_id=${payload.rm_id}&memId=${payload.profes_id}`,
+    payload
+  );
 };
 // 로그아웃
 export function logoutUser() {

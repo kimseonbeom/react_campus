@@ -39,11 +39,24 @@ export const useAttendanceModalStore = create((set) => ({
 }));
 
 export const useProjectFeedbackModalStore = create((set) => ({
-  visible: false,
-  showModal: () => set({ visible: true }),
-  hideModal: () => set({ visible: false }),
+    visible: false,
+    rm_id: null,
+    project_id: null,
+    memId: null,
+    showModal: ({ rm_id, project_id, memId }) => set({ visible: true, rm_id, project_id, memId }),
+    hideModal: () => set({ visible: false, rm_id: null, project_id: null, memId: null }),
 }));
-
+export const useProjectFeedbackModifyModalStore = create((set) => ({
+  visible: false,
+  rm_id: null,
+  project_id: null,
+  eval_id: null,
+  memId: null,
+  showModal: ({ rm_id, project_id, eval_id, memId }) =>
+    set({ visible: true, rm_id, project_id, eval_id, memId }),
+  hideModal: () =>
+    set({ visible: false, rm_id: null, project_id: null, eval_id: null, memId: null }),
+}));
 export const useMypageModalStore = create((set) => ({
   visible: false,
   showModal: () => set({ visible: true }),
