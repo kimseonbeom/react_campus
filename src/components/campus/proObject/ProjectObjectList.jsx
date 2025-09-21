@@ -12,6 +12,7 @@ import {
 } from '../commons/WHComponent';
 import { dropdownArrow, searchIcon, calender, pageArrow1, pageArrow2, pageArrow3, pageArrow4 } from '../img';
 import { getProjectObjectList, getUserSession } from "../api";
+import { useObjectRegist } from "../commons/modalStore";
 
 function ProjectObjectList() {
   const [open, setOpen] = useState(false);
@@ -21,6 +22,7 @@ function ProjectObjectList() {
   const startInputRef = useRef(null);
   const endInputRef = useRef(null);
   const [checked, setChecked] = useState(false);
+  
   const { project_id } = useParams();
   const location = useLocation();
   const memId = new URLSearchParams(location.search).get("memId");
@@ -29,6 +31,8 @@ function ProjectObjectList() {
   const [project, setProject] = useState([]);
   const user = getUserSession();
   const navigate = useNavigate();
+  const { showModal } = useObjectRegist();
+
   const [pageMaker, setPageMaker] = useState({
     page: 1,
     perPageNum: 10,
@@ -45,6 +49,9 @@ function ProjectObjectList() {
   };
   useEffect(() => {
     if(!project_id || !memId) return;
+    window.refreshProjectTeamList = () => {
+    handleSearch(1); // 첫 페이지부터 다시 불러오기
+  };
     getProjectObjectList(project_id, memId)
       .then(res => {
         console.log("로드맵 API 응답:", res.data);
@@ -53,6 +60,7 @@ function ProjectObjectList() {
         setPageMaker(res.data.pageMaker || pageMaker);
       })
       .catch(err => console.error(err));
+      
   }, [project_id, memId]);
 
   const toggleOpen = () => setOpen(!open);
@@ -113,7 +121,18 @@ const handlePageChange = (newPage) => {
         <FlexDiv>
           <CatTitle>결과물</CatTitle>
           {user?.mem_auth?.includes("ROLE01")&&(
-          <Button style={{width:'65px'}}>자료제출</Button>)
+          <Button
+  style={{ width: '65px' }}
+  onClick={() => {
+    if (!project || project.length === 0) {
+      alert("프로젝트 정보가 없습니다.");
+      return;
+    }
+    showModal(project[0].project_id);
+  }}
+>
+  자료제출
+</Button>)
 }
         </FlexDiv>
         <FlexDiv style={{marginTop:'8px'}} >

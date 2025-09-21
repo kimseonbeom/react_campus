@@ -1,8 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { Cancle, dropdownArrow } from "../img";
 import { Button, DropHeader, DropList, DropOption, SearchDrop } from "../commons/WHComponent";
 import { Container } from "../topNav/TopNav";
+import { getRegistForm, getUserSession, registRoadmap } from "../api";
+import { Overlay } from "./ProjectObjectFeedbackModify";
+import { useObjectRegist, useToastStore } from "../commons/modalStore";
+import { ExitButton } from "../lecAtten/AttandanceModal";
 
 const TopBar = styled.div`
   height: 56px;
@@ -150,7 +154,36 @@ const HiddenFile = styled.input` display: none; `;
 
 export default function ProjectObjectRegist() {
   const [dropOpen, setDropOpen] = useState(false);
-  const [dropSelected, setDropSelected] = useState("전체");
+  const [dropSelected, setDropSelected] = useState("회의록");
+   const { visible, hideModal, projectId } = useObjectRegist();
+  const [member, setMember] = useState(null);
+  const [teammembers, setTeammembers] = useState("");
+  const [professorList, setProfessorList] = useState([]);
+  const [studentList, setStudentList] = useState([]);
+  const [projectList, setProjectList] = useState([]);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [file, setFile] = useState(null);
+  const { showToast } = useToastStore();
+  const user = getUserSession();
+  const memId = user.mem_id;
+  useEffect(() => {
+  console.log("useEffect 실행", visible, projectId);
+  
+  if (!visible) return; // projectId 없어도 일단 호출 테스트
+  
+  getRegistForm(memId, projectId)
+    .then((res) => {
+      console.log("API 응답", res.data);
+      const { member, teammembers, professorList, studentList, projectList } = res.data;
+      setMember(member);
+      setTeammembers(teammembers);
+      setProfessorList(professorList);
+      setStudentList(studentList);
+      setProjectList(projectList);
+    })
+    .catch((err) => console.error("등록 초기 데이터 로딩 실패:", err));
+}, [visible, memId, projectId]);
 
   const toggleOpen = () => setDropOpen(!dropOpen);
 
@@ -158,23 +191,85 @@ export default function ProjectObjectRegist() {
         setDropSelected(value);
         setDropOpen(false);
     }
+    const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
 
+  const handleSubmit = () => {
+    if (!title || !content) {
+      showToast("제목과 내용을 입력해주세요.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("rm_name", title);
+    formData.append("rm_content", content);
+    formData.append("rm_category", dropSelected);
+    formData.append("project_id", projectId);
+    formData.append("mem_id", memId);
+    formData.append("team_id", projectList[0]?.team_id || "");
+    formData.append("eval_status", "0");
+     formData.append("writer", memId);
+    if (file) formData.append("uploadFile", file);
+    console.log("projectId:", projectId);
+    console.log("team_id:",projectList[0]?.team_id);
+    
+console.log("memId:", memId);
+for (let pair of formData.entries()) {
+  console.log(pair[0], pair[1]);
+}
+    registRoadmap(formData) 
+      .then(res => {
+        console.log("등록 성공:", res.data);
+        if (typeof window.refreshProjectTeamList === "function") {
+      window.refreshProjectTeamList();
+    }
+        hideModal();
+        
+      })
+      .catch(err => {
+        console.error("등록 실패:", err);
+      });
+  };
+if (!visible) return null;
   return (
+    <Overlay>
       <div>
        <Container style={{backgroundColor:'#fff',display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                <img src={Cancle} style={{width:'19px', height:'19px', cursor:'pointer'}}></img>
-                <Button>등록</Button>
+                <ExitButton style={{width:'19px', height:'19px', margin:'0'}} onClick={hideModal}>
+                                    <img src={Cancle} style={{ width: '19px', height: '19px' }} />
+                                </ExitButton>
+                <Button onClick={handleSubmit}>등록</Button>
             </Container>
       
         <Content>
         <div>
           <TopBox>
-            <Title>클라우드 기반 협업 플랫폼</Title>
+            <Title>{projectList[0]?.project_name ?? "-"}</Title>
             <TitleLine />
-            <Row><Label>기간</Label><Value>2025-08-26 ~ 2025-08-26</Value></Row>
-            <Row><Label>담당교수</Label><Value>서형원</Value></Row>
-            <Row><Label>팀장</Label><Value>김원희</Value></Row>
-            <Row><Label>팀원</Label><Value>권오규, 김민주, 김선범</Value></Row>
+            <Row>
+  <Label>기간</Label>
+  <Value>
+    {projectList[0] 
+      ? `${new Date(projectList[0].project_stdate).toLocaleDateString()} ~ ${new Date(projectList[0].project_endate).toLocaleDateString()}`
+      : "-"}
+  </Value>
+</Row>
+
+<Row>
+  <Label>담당교수</Label>
+  <Value>{projectList[0]?.profes_name ?? "-"}</Value>
+</Row>
+
+<Row>
+  <Label>팀장</Label>
+  <Value>{projectList[0]?.leader_name ?? "-"}</Value>
+</Row>
+
+<Row>
+  <Label>팀원</Label>
+  <Value>{teammembers || "-"}</Value>
+</Row>
           </TopBox>
         </div>
 
@@ -187,29 +282,38 @@ export default function ProjectObjectRegist() {
                 </DropHeader>
                 {dropOpen && (
                     <DropList style={{width:'131px'}}>
-                        <DropOption style={{padding:'8px 10px', fontSize:'13px'}} onClick={() => handleDropSelect("전체")}>전체</DropOption>
-                        <DropOption style={{padding:'8px 10px', fontSize:'13px'}} onClick={() => handleDropSelect("옵션1")}>옵션1</DropOption>
-                        <DropOption style={{padding:'8px 10px', fontSize:'13px'}} onClick={() => handleDropSelect("옵션2")}>옵션2</DropOption>
-                        <DropOption style={{padding:'8px 10px', fontSize:'13px'}} onClick={() => handleDropSelect("옵션3")}>옵션3</DropOption>
+                        <DropOption style={{padding:'8px 10px', fontSize:'13px'}} onClick={() => handleDropSelect("회의록")}>회의록</DropOption>
+                        <DropOption style={{padding:'8px 10px', fontSize:'13px'}} onClick={() => handleDropSelect("산출물")}>산출물</DropOption>
+                        <DropOption style={{padding:'8px 10px', fontSize:'13px'}} onClick={() => handleDropSelect("업무일지")}>업무일지</DropOption>
+                        <DropOption style={{padding:'8px 10px', fontSize:'13px'}} onClick={() => handleDropSelect("최종결과물")}>최종결과물</DropOption>
                     </DropList>
                 )}
             </SearchDrop>
 
-            <TitleInput placeholder="제목을 입력해주세요" />
+            <TitleInput
+              placeholder="제목을 입력해주세요"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
 
             <BodyWrap>
-              <BodyArea placeholder="내용을 입력해주세요." />
+              <BodyArea
+                placeholder="내용을 입력해주세요."
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+              />
             </BodyWrap>
 
             <FileRow>
               <FileButton htmlFor="file">파일선택</FileButton>
-              <HiddenFile id="file" type="file" />
-              <span>선택된 파일이 없습니다.</span>
+              <HiddenFile id="file" type="file" onChange={handleFileChange} />
+              <span>{file ? file.name : "선택된 파일이 없습니다."}</span>
             </FileRow>
           </Editor>
           </div>
         </Content>
       </div>
+    </Overlay>
   
   );
 }

@@ -162,4 +162,11 @@ export const useToastStore = create((set) => ({
   showToast: (msg) => set({ message: msg }),
   hideToast: () => set({ message: "" }),
 }));
+
+export const useObjectRegist = create((set) => ({
+  visible: false,
+  projectId: null,           // 선택한 프로젝트 ID 추가
+  showModal: (id) => set({ visible: true, projectId: id }), // 열 때 projectId 설정
+  hideModal: () => set({ visible: false, projectId: null }), // 닫으면 초기화
+}));
 export default useModalStore;

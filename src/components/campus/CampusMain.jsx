@@ -181,6 +181,7 @@ function CampusMain() {
       <ProjectTeamModifyCheck/>
       <ProjectObjectFeedback/>
       <ProjectObjectFeedbackModify/>
+      <ProjectObjectRegist/>
       {message && <Toast message={message} onClose={hideToast} />}
       </>
       )}

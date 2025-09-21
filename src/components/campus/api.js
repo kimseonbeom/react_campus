@@ -138,6 +138,7 @@ export const getEvaluationForm = (rm_id) => {
     params: { rm_id }
   })
 };
+
 export const registerEvaluation = (payload) => {
   return axios.post(`/api/roadmap/evaluation/regist?memId=${payload.profes_id}`, payload)
 };
@@ -149,6 +150,17 @@ export const modifyEvaluation = (payload) => {
     `/api/roadmap/modify?eval_id=${payload.eval_id}&rm_id=${payload.rm_id}&memId=${payload.profes_id}`,
     payload
   );
+};
+export const registRoadmap = (formData) => {
+  return axios.post("/api/roadmap/regist", formData);
+};
+export const getRegistForm = (mem_id, project_id) => {
+  return axios.get("/api/roadmap/regist", {
+    params: {
+      mem_id,
+      project_id,
+    },
+  });
 };
 // 로그아웃
 export function logoutUser() {

@@ -143,6 +143,7 @@ export default function ProjectObjectDetail() {
   const location = useLocation();
   const navigate = useNavigate();
   const memId = new URLSearchParams(location.search).get("memId");
+  
   const [memName, setMemName] = useState('');
   const [roadMap, setRoadMap] = useState(null);
   const [projectList, setProjectList] = useState([]);
