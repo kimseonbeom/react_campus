@@ -12,7 +12,7 @@ import {
 } from '../commons/WHComponent';
 import { dropdownArrow, searchIcon, calender, pageArrow1, pageArrow2, pageArrow3, pageArrow4 } from '../img';
 import { getProjectObjectList, getUserSession } from "../api";
-import { useObjectRegist } from "../commons/modalStore";
+import { useObjectRegist, useToastStore } from "../commons/modalStore";
 
 function ProjectObjectList() {
   const [open, setOpen] = useState(false);
@@ -22,7 +22,7 @@ function ProjectObjectList() {
   const startInputRef = useRef(null);
   const endInputRef = useRef(null);
   const [checked, setChecked] = useState(false);
-  
+  const { showToast } = useToastStore();
   const { project_id } = useParams();
   const location = useLocation();
   const memId = new URLSearchParams(location.search).get("memId");
@@ -32,7 +32,7 @@ function ProjectObjectList() {
   const user = getUserSession();
   const navigate = useNavigate();
   const { showModal } = useObjectRegist();
-
+ 
   const [pageMaker, setPageMaker] = useState({
     page: 1,
     perPageNum: 10,
@@ -85,7 +85,7 @@ function ProjectObjectList() {
   if (!project_id || !memId) return;
 
   if (startDate && endDate && startDate > endDate) {
-    alert("시작일이 종료일보다 클 수 없습니다.");
+    showToast("시작일이 종료일보다 클 수 없습니다.");
     return;
   }
 
@@ -125,7 +125,7 @@ const handlePageChange = (newPage) => {
   style={{ width: '65px' }}
   onClick={() => {
     if (!project || project.length === 0) {
-      alert("프로젝트 정보가 없습니다.");
+      showToast("프로젝트 정보가 없습니다.");
       return;
     }
     showModal(project[0].project_id);

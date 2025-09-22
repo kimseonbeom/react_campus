@@ -61,6 +61,7 @@ function ProjectObjectFeedback() {
     const [scores, setScores] = useState([0, 0, 0, 0, 0]);
     const [feedback, setFeedback] = useState('');
     const user = getUserSession();
+
   if (!visible) return null;
     // 각 항목 점수 state (5개)
 
@@ -81,31 +82,35 @@ function ProjectObjectFeedback() {
 
     const total = scores.reduce((a, b) => a + b, 0);
 
-    const handleRegister = async () => {
+    const handleRegister = () => {
     if (!feedback.trim()) {
         showToast("피드백을 입력해주세요!");
         return;
     }
 
-    const payload = {
-        rm_id,
-        profes_id: user.mem_id,
-        eval_score: total,
-        eval_content: feedback,
-    };
-    console.log("등록 payload:", payload);
-   
-    try {
-        await registerEvaluation(payload);
-        showToast("평가가 완료되었습니다!");
-        hideModal();
-         if (typeof window.refreshProjectTeamList === "function") {
-      window.refreshProjectTeamList();
-         }
-    } catch (err) {
-        console.error(err);
-        showToast("평가 등록 중 오류가 발생했습니다.");
-    }
+    // 1️⃣ 컨펌 모달 띄우기
+    showConfirm("평가를 등록하시겠습니까?", async () => {
+        // 2️⃣ 확인 클릭 시 실행
+        const payload = {
+            rm_id,
+            profes_id: user.mem_id,
+            eval_score: total,
+            eval_content: feedback,
+        };
+        console.log("등록 payload:", payload);
+
+        try {
+            await registerEvaluation(payload);
+            showToast("평가가 완료되었습니다!");
+            hideModal();
+            if (typeof window.refreshProjectTeamList === "function") {
+                window.refreshProjectTeamList();
+            }
+        } catch (err) {
+            console.error(err);
+            showToast("평가 등록 중 오류가 발생했습니다.");
+        }
+    });
 };
 
     return (

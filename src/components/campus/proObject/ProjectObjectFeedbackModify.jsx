@@ -54,6 +54,7 @@ const ScoreInput = styled.input`
 `
 
 function ProjectObjectFeedbackModify() {
+    const { showConfirm } = useModalStore();
     const { showToast } = useToastStore();
     const { visible, rm_id, project_id, eval_id, memId, hideModal } = useProjectFeedbackModifyModalStore();
     const [scores, setScores] = useState([0, 0, 0, 0, 0]);
@@ -98,22 +99,26 @@ function ProjectObjectFeedbackModify() {
   setTotal(newScores.reduce((a, b) => a + b, 0));
 };
 
-    const handleRegister = async () => {
-        if (!feedback.trim()) {
-            showToast("피드백을 입력해주세요!");
-            return;
-        }
+    const handleRegister = () => {
+    if (!feedback.trim()) {
+        showToast("피드백은 필수입니다.");
+        return;
+    }
 
+    // 컨펌 모달 띄우기
+    showConfirm("평가를 수정하시겠습니까?", async () => {
+        // 확인 클릭 시 실행
         const payload = {
-    rm_id,           // 문자열
-    eval_id,         // 문자열
-    profes_id: user.mem_id,
-    eval_score: total,
-    eval_content: feedback,
-};
+            rm_id,     // 문자열
+            eval_id,   // 문자열
+            profes_id: user.mem_id,
+            eval_score: total,
+            eval_content: feedback,
+        };
+
         try {
             await modifyEvaluation(payload);
-            showToast("평가가 완료되었습니다!");
+            showToast("평가가 수정되었습니다!");
             hideModal();
             if (typeof window.refreshProjectTeamList === "function") {
                 window.refreshProjectTeamList();
@@ -122,7 +127,8 @@ function ProjectObjectFeedbackModify() {
             console.error(err);
             showToast("평가 등록 중 오류가 발생했습니다.");
         }
-    };
+    });
+};
 
     return (
         <Overlay>

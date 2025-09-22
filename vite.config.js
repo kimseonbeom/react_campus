@@ -6,10 +6,10 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8081', // 백엔드 포트
-        changeOrigin: true,              // 호스트 헤더 변경
+        target: 'http://localhost:8081', 
+        changeOrigin: true,            
         secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '/campus/api')                   // https가 아닌 경우
+        rewrite: (path) => path.replace(/^\/api/, '/campus/api')                  
       },
     },
   },

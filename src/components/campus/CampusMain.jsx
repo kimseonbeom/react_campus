@@ -94,6 +94,7 @@ import ProfessorSearch from './proTeam/ProfessorSearch'
 import Toast from './commons/Toast'
 import ProjectObjectDetail from './proObject/ProjectObjectDetail'
 import ProjectObjectFeedbackModify from './proObject/ProjectObjectFeedbackModify'
+import ConfirmModal from './commons/ConfirmModal'
 
 function CampusMain() {
   const isLoggedIn = useAuthStore(state => state.isLoggedIn)
@@ -182,6 +183,7 @@ function CampusMain() {
       <ProjectObjectFeedback/>
       <ProjectObjectFeedbackModify/>
       <ProjectObjectRegist/>
+      <ConfirmModal/>
       {message && <Toast message={message} onClose={hideToast} />}
       </>
       )}

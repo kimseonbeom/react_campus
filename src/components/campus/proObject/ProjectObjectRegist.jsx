@@ -5,7 +5,7 @@ import { Button, DropHeader, DropList, DropOption, SearchDrop } from "../commons
 import { Container } from "../topNav/TopNav";
 import { getRegistForm, getUserSession, registRoadmap } from "../api";
 import { Overlay } from "./ProjectObjectFeedbackModify";
-import { useObjectRegist, useToastStore } from "../commons/modalStore";
+import useModalStore, { useObjectRegist, useToastStore } from "../commons/modalStore";
 import { ExitButton } from "../lecAtten/AttandanceModal";
 
 const TopBar = styled.div`
@@ -166,6 +166,8 @@ export default function ProjectObjectRegist() {
   const [file, setFile] = useState(null);
   const { showToast } = useToastStore();
   const user = getUserSession();
+  const showConfirm = useModalStore((state) => state.showConfirm);
+
   const memId = user.mem_id;
   useEffect(() => {
   console.log("useEffect 실행", visible, projectId);
@@ -196,11 +198,14 @@ export default function ProjectObjectRegist() {
   };
 
   const handleSubmit = () => {
-    if (!title || !content) {
-      showToast("제목과 내용을 입력해주세요.");
-      return;
-    }
+  if (!title || !content) {
+    showToast("제목과 내용을 입력해주세요.");
+    return;
+  }
 
+  // 1️⃣ 컨펌 모달 띄우기
+  showConfirm("결과물을 등록하시겠습니까?", () => {
+    // 2️⃣ 확인 버튼 클릭 시 실행
     const formData = new FormData();
     formData.append("rm_name", title);
     formData.append("rm_content", content);
@@ -209,28 +214,23 @@ export default function ProjectObjectRegist() {
     formData.append("mem_id", memId);
     formData.append("team_id", projectList[0]?.team_id || "");
     formData.append("eval_status", "0");
-     formData.append("writer", memId);
+    formData.append("writer", memId);
     if (file) formData.append("uploadFile", file);
-    console.log("projectId:", projectId);
-    console.log("team_id:",projectList[0]?.team_id);
-    
-console.log("memId:", memId);
-for (let pair of formData.entries()) {
-  console.log(pair[0], pair[1]);
-}
-    registRoadmap(formData) 
+
+    registRoadmap(formData)
       .then(res => {
-        console.log("등록 성공:", res.data);
+        showToast("결과물이 등록되었습니다.");
         if (typeof window.refreshProjectTeamList === "function") {
-      window.refreshProjectTeamList();
-    }
-        hideModal();
-        
+          window.refreshProjectTeamList(); // 리스트 새로고침
+        }
+        hideModal(); // 모달 닫기
       })
       .catch(err => {
         console.error("등록 실패:", err);
+        showToast("등록에 실패했습니다.");
       });
-  };
+  });
+};
 if (!visible) return null;
   return (
     <Overlay>

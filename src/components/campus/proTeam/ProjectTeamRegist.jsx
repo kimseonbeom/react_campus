@@ -155,6 +155,7 @@ const leader = selectedTeamLeader?.mem_name ?? "";
 const members = selectedTeamMember?.map(m => m.mem_name) ?? [];
 
   const [startDate, setStartDate] = useState(new Date());
+  const { showToast } = useToastStore();
   const [endDate, setEndDate] = useState(new Date());
   const [term, setTerm] = useState("1학기");
   const [projectName, setProjectName] = useState("");
@@ -169,7 +170,7 @@ const members = selectedTeamMember?.map(m => m.mem_name) ?? [];
 const handleSubmit = async () => {
   try {
     if (!selectedProfessor || !selectedTeamLeader || selectedTeamMember.length === 0) {
-      alert("교수, 팀장, 팀원을 모두 선택해주세요.");
+      showToast("교수, 팀장, 팀원을 모두 선택해주세요.");
       return;
     }
 
@@ -190,12 +191,12 @@ const handleSubmit = async () => {
     if (typeof window.refreshProjectTeamList === "function") {
       window.refreshProjectTeamList();
     }
-    alert("프로젝트 등록 완료!");
+    showToast("프로젝트 등록 완료!");
     hideModal();
 
   } catch (err) {
     console.error("프로젝트 등록 실패:", err);
-    alert("프로젝트 등록 실패: 서버 에러 확인");
+    showToast("프로젝트 등록 실패: 서버 에러 확인");
   }
 };
 
